@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro Diário - Serviço Antivetorial</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f4f4f4;
+    }
+    .container {
+      max-width: 98%;
+      margin: 20px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    th, td {
+      vertical-align: middle;
+      text-align: center;
+    }
+    .form-control, .form-select {
+      font-size: 0.85rem;
+      padding: 5px 8px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <ul class="nav nav-tabs" id="registroTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="diario-tab" data-bs-toggle="tab" data-bs-target="#diario" type="button" role="tab">Registro Diário</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="recuperacao-tab" data-bs-toggle="tab" data-bs-target="#recuperacao" type="button" role="tab">Recuperação</button>
+    </li>
+  </ul>
+  <div class="tab-content mt-4" id="registroTabsContent">
+
+    <!-- Registro Diário -->
+    <div class="tab-pane fade show active" id="diario" role="tabpanel">
+      <h4 class="text-center mb-3">REGISTRO DIÁRIO DO SERVIÇO ANTIVETORIAL</h4>
+      <form id="registroForm"> <!-- (mesmo conteúdo da primeira versão) --> </form>
+      <table class="table table-bordered table-sm" id="tabela-registros">
+        <thead class="table-light">
+          <tr>
+            <th>Data</th><th>Setor</th><th>Lado</th><th>Logradouro</th><th>Tipo Imóvel</th><th>Atividade</th>
+            <th>A1</th><th>A2</th><th>B</th><th>C</th><th>D1</th><th>D2</th><th>E</th>
+            <th>Eliminados</th><th>Larvicida</th><th>Trat.</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Recuperação -->
+    <div class="tab-pane fade" id="recuperacao" role="tabpanel">
+      <h4 class="text-center mb-3">REGISTRO DE RECUPERAÇÃO</h4>
+      <form id="recuperacaoForm">
+        <div class="row g-2 mb-3">
+          <div class="col-md-3">
+            <label class="form-label">Data da Atividade</label>
+            <input type="date" class="form-control" name="data">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Setor</label>
+            <input type="text" class="form-control" name="setor">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Lado</label>
+            <input type="text" class="form-control" name="lado">
+          </div>
+          <div class="col-md-5">
+            <label class="form-label">Nome do Logradouro</label>
+            <input type="text" class="form-control" name="logradouro">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Nº</label>
+            <input type="text" class="form-control" name="numero">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Sequência</label>
+            <input type="text" class="form-control" name="sequencia">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Complemento</label>
+            <input type="text" class="form-control" name="complemento">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Tipo do Imóvel</label>
+            <select class="form-select" name="tipo_imovel">
+              <option value="R">R</option>
+              <option value="R-F">R-F</option>
+            </select>
+          </div>
+        </div>
+
+        <h6>Tratamento</h6>
+        <div class="row g-2">
+          <div class="col-md-2">
+            <label class="form-label">Imóveis Trat.</label>
+            <input type="number" class="form-control" name="im_trat" value="0">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Larvicida</label>
+            <input type="text" class="form-control" name="larvicida">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Qtd. Germinal</label>
+            <input type="number" class="form-control" name="qtde_germinal" value="0">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Qtd. Dep. Trat.</label>
+            <input type="number" class="form-control" name="qtde_dep_trat" value="0">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Depósitos Eliminados</label>
+            <input type="number" class="form-control" name="depositos_eliminados" value="0">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Observações</label>
+            <input type="text" class="form-control" name="obs">
+          </div>
+        </div>
+
+        <div class="row g-2 mt-3">
+          <div class="col-12 text-end">
+            <button type="submit" class="btn btn-success">Salvar Recuperação</button>
+          </div>
+        </div>
+      </form>
+
+      <hr class="my-4">
+      <table class="table table-bordered table-sm" id="tabela-recuperacoes">
+        <thead class="table-light">
+          <tr>
+            <th>Data</th><th>Setor</th><th>Lado</th><th>Logradouro</th><th>Tipo Imóvel</th>
+            <th>Trat.</th><th>Larvicida</th><th>Germinal</th><th>Dep. Trat.</th><th>Dep. Elim.</th><th>Obs.</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Carregar e salvar REGISTRO DIÁRIO (já existente)
+
+  // Carregar e salvar RECUPERAÇÃO
+  const formRec = document.getElementById("recuperacaoForm");
+  const tabelaRec = document.querySelector("#tabela-recuperacoes tbody");
+
+  formRec.addEventListener("submit", function(e) {
+    e.preventDefault();
+    const dados = Object.fromEntries(new FormData(formRec).entries());
+    const lista = JSON.parse(localStorage.getItem("recuperacoes") || "[]");
+    lista.push(dados);
+    localStorage.setItem("recuperacoes", JSON.stringify(lista));
+    formRec.reset();
+    carregarRecuperacoes();
+  });
+
+  function carregarRecuperacoes() {
+    const lista = JSON.parse(localStorage.getItem("recuperacoes") || "[]");
+    tabelaRec.innerHTML = "";
+    lista.forEach(d => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${d.data}</td><td>${d.setor}</td><td>${d.lado}</td><td>${d.logradouro}</td><td>${d.tipo_imovel}</td>
+        <td>${d.im_trat}</td><td>${d.larvicida}</td><td>${d.qtde_germinal}</td>
+        <td>${d.qtde_dep_trat}</td><td>${d.depositos_eliminados}</td><td>${d.obs}</td>
+      `;
+      tabelaRec.appendChild(tr);
+    });
+  }
+
+  window.addEventListener("DOMContentLoaded", () => {
+    carregarRecuperacoes();
+  });
+</script>
+</body>
+</html>

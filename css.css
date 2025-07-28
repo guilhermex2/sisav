@@ -1,0 +1,19 @@
+body {
+      background-color: #f4f4f4;
+    }
+    .container {
+      max-width: 95%;
+      margin: 20px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    th, td {
+      vertical-align: middle;
+      text-align: center;
+    }
+    .form-control, .form-select {
+      font-size: 0.85rem;
+      padding: 5px 8px;
+    }

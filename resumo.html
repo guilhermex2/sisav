@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro Diário do Serviço Antivetorial</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
+    h1, h2 { color: #333; }
+    label { display: block; margin-top: 10px; }
+    input, select, button { padding: 5px; margin-top: 5px; width: 100%; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #eee; }
+    .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+    .tab { cursor: pointer; padding: 10px 20px; background: #ddd; border-radius: 5px; }
+    .tab.active { background: #bbb; font-weight: bold; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+  </style>
+</head>
+<body>
+  <h1>Registro Diário do Serviço Antivetorial</h1>
+  <div class="tabs">
+    <div class="tab active" data-tab="registro">Registro Diário</div>
+    <div class="tab" data-tab="recuperacao">Recuperação</div>
+    <div class="tab" data-tab="resumo">Resumo Diário</div>
+  </div>
+
+  <div class="tab-content active" id="registro">
+    <form id="registroForm"></form>
+    <table id="registroTabela"></table>
+  </div>
+
+  <div class="tab-content" id="recuperacao">
+    <form id="recuperacaoForm"></form>
+    <table id="recuperacaoTabela"></table>
+  </div>
+
+  <div class="tab-content" id="resumo">
+    <h2>Resumo Diário</h2>
+    <div id="resumoConteudo"></div>
+  </div>
+
+  <script>
+    const tabs = document.querySelectorAll('.tab');
+    const contents = document.querySelectorAll('.tab-content');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        contents.forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+        if (tab.dataset.tab === 'resumo') gerarResumo();
+      });
+    });
+
+    function gerarResumo() {
+      const registros = JSON.parse(localStorage.getItem('registros') || '[]');
+      const recuperacoes = JSON.parse(localStorage.getItem('recuperacoes') || '[]');
+      const total = {};
+
+      function acumular(lista) {
+        lista.forEach(item => {
+          for (let chave in item) {
+            if (!isNaN(item[chave])) {
+              total[chave] = (total[chave] || 0) + Number(item[chave]);
+            }
+          }
+        });
+      }
+
+      acumular(registros);
+      acumular(recuperacoes);
+
+      let html = '<table><tr><th>Campo</th><th>Total</th></tr>';
+      for (let campo in total) {
+        html += `<tr><td>${campo}</td><td>${total[campo]}</td></tr>`;
+      }
+      html += '</table>';
+
+      document.getElementById('resumoConteudo').innerHTML = html;
+    }
+  </script>
+  <script src="registro.js"></script>
+  <script src="recuperacao.js"></script>
+</body>
+</html>

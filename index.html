@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro Diário - Serviço Antivetorial</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f4f4f4;
+    }
+    .container {
+      max-width: 95%;
+      margin: 20px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    th, td {
+      vertical-align: middle;
+      text-align: center;
+    }
+    .form-control, .form-select {
+      font-size: 0.85rem;
+      padding: 5px 8px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h3 class="text-center mb-4">REGISTRO DIÁRIO DO SERVIÇO ANTIVETORIAL</h3>
+  <form id="registroForm">
+    <div class="row g-2 mb-3">
+      <div class="col-md-3">
+        <label class="form-label">Data da Atividade</label>
+        <input type="date" class="form-control" name="data" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Código e nome da Localidade</label>
+        <select class="form-select" name="tipo_imovel">
+          <option value="aloiso-corrado">ALOISO CORRADO</option>
+          <option value="bela-vista">BELA VISTA</option>
+          <option value="centro">CENTRO</option>
+          <option value="conceicao">CONCEIÇÃO</option>
+          <option value="constanca">CONSTANÇA</option>
+          <option value="corrego-de-pedras">CÓRREGO DE PEDRAS</option>
+          <option value="emburrado">EMBURRADO</option>
+          <option value="euclides-neto">EUCLIDES NETO</option>
+          <option value="fazenda-do-povo">FAZENDA DO POVO</option>
+          <option value="nossa-senhora-aparecida">NOSSA SENHORA APARECIDA</option>
+          <option value="urbis">URBIS</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Catg. da Localidade</label>
+        <select class="form-select" name="tipo_imovel">
+          <option value="bairro">BAIRRO</option>
+          <option value="povoado">POVOADO</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Zona</label>
+        <select class="form-select" name="tipo_imovel">
+          <option value="urbana">URBANA</option>
+          <option value="rural">RURAL</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Concluída</label>
+        <select class="form-select" name="tipo_imovel">
+          <option value="sim">SIM</option>
+          <option value="nao">NÃO</option>
+        </select>
+      </div>
+      
+      <div class="col-md-2">
+        <label class="form-label">Setor</label>
+        <input type="text" class="form-control" name="setor">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Lado</label>
+        <input type="text" class="form-control" name="lado">
+      </div>
+      <div class="col-md-5">
+        <label class="form-label">Nome do Logradouro</label>
+        <input type="text" class="form-control" name="logradouro">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Nº</label>
+        <input type="text" class="form-control" name="numero">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Sequência</label>
+        <input type="text" class="form-control" name="sequencia">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Complemento</label>
+        <input type="text" class="form-control" name="complemento">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Tipo do Imóvel</label>
+        <select class="form-select" name="tipo_imovel">
+          <option value="R">R</option>
+          <option value="R-F">R-F</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Atividade</label>
+        <select class="form-select" name="atividade">
+          <option value="1-RA">1-RA - Revisão de área</option>
+          <option value="2-LI+T">2-LI+T - Levantamento de índice + Tratamento</option>
+          <option value="3-PE">3-PE - Ponto Estratégico</option>
+          <option value="4-T">4-T - Tratamento</option>
+        </select>
+      </div>
+    </div>
+
+    <h5 class="mt-4">Depósitos Inspecionados</h5>
+    <div class="row g-2">
+      <div class="col">
+        <label class="form-label">A1</label>
+        <input type="number" class="form-control" name="a1" min="0" value="0">
+      </div>
+      <div class="col">
+        <label class="form-label">A2</label>
+        <input type="number" class="form-control" name="a2" min="0" value="0">
+      </div>
+      <div class="col">
+        <label class="form-label">B</label>
+        <input type="number" class="form-control" name="b" min="0" value="0">
+      </div>
+      <div class="col">
+        <label class="form-label">C</label>
+        <input type="number" class="form-control" name="c" min="0" value="0">
+      </div>
+      <div class="col">
+        <label class="form-label">D1</label>
+        <input type="number" class="form-control" name="d1" min="0" value="0">
+      </div>
+      <div class="col">
+        <label class="form-label">D2</label>
+        <input type="number" class="form-control" name="d2" min="0" value="0">
+      </div>
+      <div class="col">
+        <label class="form-label">E</label>
+        <input type="number" class="form-control" name="e" min="0" value="0">
+      </div>
+    </div>
+
+    <div class="row g-2 mt-3">
+      <div class="col-md-3">
+        <label class="form-label">Depósitos Eliminados</label>
+        <input type="number" class="form-control" name="depositos_eliminados" min="0" value="0">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Imóveis Insp. L1</label>
+        <input type="number" class="form-control" name="insp_l1" min="0" value="0">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Larvicida</label>
+        <input type="text" class="form-control" name="larvicida">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Qtd. Im. Trat.</label>
+        <input type="number" class="form-control" name="qtde_im_trat" min="0" value="0">
+      </div>
+    </div>
+
+    <div class="row g-2 mt-4">
+      <div class="col-12 text-end">
+        <button type="submit" class="btn btn-primary">Salvar Registro</button>
+      </div>
+    </div>
+  </form>
+
+  <hr class="my-4">
+  <h5>Registros Salvos</h5>
+  <table class="table table-bordered table-sm" id="tabela-registros">
+    <thead class="table-light">
+      <tr>
+        <th>Data</th>
+        <th>Setor</th>
+        <th>Lado</th>
+        <th>Logradouro</th>
+        <th>Tipo Imóvel</th>
+        <th>Atividade</th>
+        <th>A1</th><th>A2</th><th>B</th><th>C</th><th>D1</th><th>D2</th><th>E</th>
+        <th>Eliminados</th>
+        <th>Larvicida</th>
+        <th>Trat.</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script>
+  const form = document.getElementById("registroForm");
+  const tabela = document.querySelector("#tabela-registros tbody");
+
+  function salvarNoLocalStorage(dado) {
+    const dados = JSON.parse(localStorage.getItem("registros") || "[]");
+    dados.push(dado);
+    localStorage.setItem("registros", JSON.stringify(dados));
+  }
+
+  function carregarRegistros() {
+    const dados = JSON.parse(localStorage.getItem("registros") || "[]");
+    tabela.innerHTML = "";
+    dados.forEach(d => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${d.data}</td>
+        <td>${d.setor}</td>
+        <td>${d.lado}</td>
+        <td>${d.logradouro}</td>
+        <td>${d.tipo_imovel}</td>
+        <td>${d.atividade}</td>
+        <td>${d.a1}</td>
+        <td>${d.a2}</td>
+        <td>${d.b}</td>
+        <td>${d.c}</td>
+        <td>${d.d1}</td>
+        <td>${d.d2}</td>
+        <td>${d.e}</td>
+        <td>${d.depositos_eliminados}</td>
+        <td>${d.larvicida}</td>
+        <td>${d.qtde_im_trat}</td>
+      `;
+      tabela.appendChild(tr);
+    });
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    const dados = Object.fromEntries(new FormData(form).entries());
+    salvarNoLocalStorage(dados);
+    carregarRegistros();
+    form.reset();
+  });
+
+  window.addEventListener("DOMContentLoaded", carregarRegistros);
+</script>
+</body>
+</html>
