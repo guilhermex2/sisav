@@ -7,5 +7,20 @@ o sistema deve ter uma pagina inicial para o usuario acessar o sistema
 essa parte só é preenchida uma vez no dia, preciso colocar no 
 inicio ou antes de preencher o formulario
 
-
 no final seria bom um metodo para gerar um relatorio com os dados preenchidos
+
+****SOBRE O DESENVOLVIMENTO****
+07/08/2025 - Preciso que o sistema "feche" o turno no dia, e no outro dia comece
+um novo turno no mesmo bairro caso não seja concluida no mesmo dia.
+
+
+10/08/2025 - irei alterar a interface:
+- Remover concluida da interface inicial
+- Remover a tabela de resumos
+- Adicionar um botão para fechar o turno e ir para o resumo
+- Criar uma nova pagina, onde terá Concluida, Qt de Quarteirões e os Resumos
+
+17/08/2025 - preciso entender de fato o fluxo do agente durante a passagem dos dias
+o que acontece no outro dia caso ele não cocnlua os quarteirões?
+é somado os imoveis mesmo sem concluir os quarteirões?
+o que acontece apos concluir a zona? 

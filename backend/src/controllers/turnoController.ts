@@ -37,23 +37,43 @@ const formatRegistro = (registro: any) => {
 // Controller para criar vários registros
 export const criarRegistros = async (req: Request, res: Response) => {
   try {
-    const { turnoId } = req.params;
-    const registrosRecebidos = req.body;
-
-    if (!Array.isArray(registrosRecebidos)) {
-      return res.status(400).json({ erro: 'Formato inválido. Esperado um array de registros.' });
-    }
-
-    const registrosFormatados = registrosRecebidos.map(r => formatRegistro({ ...r, turnoId }));
-
-    const criados = await prisma.registro.createMany({
-      data: registrosFormatados
+    const registro = await prisma.registro.create({
+      data: {
+          quarteirao: "2",             
+          sequencia: "10/1",               
+          lado: "3",                    
+          logradouro: "Teste dia 2",              
+          numero: "5",                  
+          sequencia2: "24-1",              
+          complemento: "Nada 2",             
+          tipo_imovel: "TB",             
+          horario_entrada: "09:40",         
+          a1: 1,                         
+          a2: 3,                         
+          b: 2,                          
+          c: 0,                          
+          d1: 1,                         
+          d2: 1,                         
+          e: 0,                          
+          depositos_eliminados: 0,       
+          insp_l1: 0,                    
+          amostra_inicial: 0,            
+          amostra_final: 0,              
+          qtd_tubitos: 0,                
+          im_trat: 0,                    
+          queda_gramas: 0,               
+          qtd_dep_trat: 0,               
+          informacao: "nada a informar hoje",
+          data: new Date("2025-08-05"),
+          atividade: "1-RA",
+          turnoId: "2499e3ed-b1b0-4312-9630-5bb951414c7d"
+      }
     });
 
-    return res.status(201).json({ mensagem: 'Registros criados com sucesso!', dados: criados });
-  } catch (erro) {
-    console.error(erro);
-    return res.status(500).json({ erro: 'Erro ao criar registros.' });
+    res.status(201).json(registro);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erro ao criar registro' });
   }
 };
 

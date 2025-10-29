@@ -5,234 +5,277 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Registro Diário - Serviço Antivetorial</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="css.css">
+  <style>
+    body {
+      display: flex;
+      min-height: 100vh;
+      background-color: #f8f9fa;
+      overflow-x: hidden;
+    }
+
+    /* ===== MENU LATERAL ===== */
+    .sidebar {
+      width: 240px;
+      background-color: #0d6efd;
+      color: #fff;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      padding: 20px 10px;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(0);
+      transition: transform 0.3s ease;
+      z-index: 1000;
+    }
+
+    .sidebar.hidden {
+      transform: translateX(-100%);
+    }
+
+    .sidebar h4 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 1.2rem;
+    }
+
+    .sidebar a {
+      color: #fff;
+      text-decoration: none;
+      display: block;
+      padding: 10px 15px;
+      border-radius: 8px;
+      margin-bottom: 5px;
+      transition: background 0.3s;
+    }
+
+    .sidebar a:hover {
+      background-color: #0b5ed7;
+    }
+
+    .sidebar .logout {
+      margin-top: auto;
+      background: #dc3545;
+      text-align: center;
+    }
+
+    /* ===== BOTÃO DE MENU ===== */
+    .menu-toggle {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      background-color: #0d6efd;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 8px 12px;
+      font-size: 20px;
+      cursor: pointer;
+      z-index: 1100;
+      transition: background 0.3s;
+    }
+
+    .menu-toggle:hover {
+      background-color: #0b5ed7;
+    }
+
+    /* ===== CONTEÚDO PRINCIPAL ===== */
+    .content {
+      margin-left: 260px;
+      padding: 30px;
+      flex: 1;
+      width: 100%;
+      transition: margin-left 0.3s ease;
+    }
+
+    .sidebar.hidden + .content {
+      margin-left: 0;
+    }
+
+    textarea {
+      width: 100%;
+      resize: vertical;
+    }
+
+    /* ===== RESPONSIVIDADE ===== */
+    @media (max-width: 992px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .sidebar.show {
+        transform: translateX(0);
+      }
+      .content {
+        margin-left: 0;
+      }
+    }
+  </style>
 </head>
 <body>
-<div class="container">
-  <h3 class="text-center mb-4">REGISTRO DIÁRIO DO SERVIÇO ANTIVETORIAL</h3>
-  <form id="registroForm">
-    <div class="row g-2 mb-3">
-      <div class="col-md-2">
-        <label class="form-label">Nº do Quarteirão</label>
-        <input type="text" class="form-control" name="quarteirao">      
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">Seq.</label>
-        <input type="text" class="form-control" name="sequencia">
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">Lado</label>
-        <input type="text" class="form-control" name="lado">
-      </div>
-      <div class="col-md-5">
-        <label class="form-label">Nome do Logradouro</label>
-        <input type="text" class="form-control" name="logradouro">
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">Nº</label>
-        <input type="text" class="form-control" name="numero">
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">Sequência</label>
-        <input type="text" class="form-control" name="sequencia2">
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">Complemento</label>
-        <input type="text" class="form-control" name="complemento">
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">Tipo do Imóvel</label>
-        <select class="form-select" name="tipo_imovel">
-          <option value="R">R</option>
-          <option value="R-F">R-F</option>
-          <option value="C">C</option>
-          <option value="C-F">C-F</option>
-          <option value="TB">TB</option>
-          <option value="TB-F">TB-F</option>
-          <option value="O">O</option>
-        </select>
-      </div>
-      <div class="col-md-4">
-        <label class="form-label">Horário de entrada</label>
-        <input type="time" class="form-control" name="horario_entrada">
-      </div>
-    </div>
 
-    <h5 class="mt-4">Depósitos Inspecionados</h5>
-    <div class="row g-2">
-      <div class="col">
-        <label class="form-label">A1</label>
-        <input type="number" class="form-control" name="a1" min="0" value="0">
-      </div>
-      <div class="col">
-        <label class="form-label">A2</label>
-        <input type="number" class="form-control" name="a2" min="0" value="0">
-      </div>
-      <div class="col">
-        <label class="form-label">B</label>
-        <input type="number" class="form-control" name="b" min="0" value="0">
-      </div>
-      <div class="col">
-        <label class="form-label">C</label>
-        <input type="number" class="form-control" name="c" min="0" value="0">
-      </div>
-      <div class="col">
-        <label class="form-label">D1</label>
-        <input type="number" class="form-control" name="d1" min="0" value="0">
-      </div>
-      <div class="col">
-        <label class="form-label">D2</label>
-        <input type="number" class="form-control" name="d2" min="0" value="0">
-      </div>
-      <div class="col">
-        <label class="form-label">E</label>
-        <input type="number" class="form-control" name="e" min="0" value="0">
-      </div>
-    </div>
+  <!-- BOTÃO PARA ABRIR MENU -->
+  <button class="menu-toggle" id="menuToggle">☰</button>
 
-    <div class="row g-2 mt-3">
-      <div class="col-md-3">
-        <label class="form-label">Depósitos Eliminados</label>
-        <input type="number" class="form-control" name="depositos_eliminados" min="0" value="0">
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">Imóveis Insp. L1</label>
-        <select class="form-select" name="insp_l1">
-          <option value="X">X</option>
-          <option value="N">N</option>
-        </select>
+  <!-- MENU LATERAL -->
+  <nav class="sidebar hidden" id="sidebar">
+    <h4>Menu</h4>
+    <a href="index.html">🏠 Início</a>
+    <a href="turno.html">🕒 Turno Diário</a>
+    <a href="registros.html">📝 Registro</a>
+    <a href="recuperacao.html">📂 Recuperação</a>
+    <a href="final.html">📊 Resumo</a>
+    <a href="#" class="logout">🚪 Sair</a>
+  </nav>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <div class="content container">
+    <h3 class="text-center mb-4">REGISTRO DIÁRIO DO SERVIÇO ANTIVETORIAL</h3>
+
+    <form id="registroForm">
+      <div class="row g-2 mb-3">
+        <div class="col-md-2">
+          <label class="form-label">Nº do Quarteirão</label>
+          <input type="text" class="form-control" name="quarteirao">      
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Seq.</label>
+          <input type="text" class="form-control" name="sequencia">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Lado</label>
+          <input type="text" class="form-control" name="lado">
+        </div>
+        <div class="col-md-5">
+          <label class="form-label">Nome do Logradouro</label>
+          <input type="text" class="form-control" name="logradouro">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Nº</label>
+          <input type="text" class="form-control" name="numero">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Sequência</label>
+          <input type="text" class="form-control" name="sequencia2">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Complemento</label>
+          <input type="text" class="form-control" name="complemento">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Tipo do Imóvel</label>
+          <select class="form-select" name="tipo_imovel">
+            <option value="R">R</option>
+            <option value="R-F">R-F</option>
+            <option value="C">C</option>
+            <option value="C-F">C-F</option>
+            <option value="TB">TB</option>
+            <option value="TB-F">TB-F</option>
+            <option value="O">O</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Horário de entrada</label>
+          <input type="time" class="form-control" name="horario_entrada">
+        </div>
       </div>
 
-      <h5 class="mt-4">Amostra / Tratamento (Larvicida)</h5>
-      <div class="col-md-3">
-        <label class="form-label">N. Amostra inicial</label>
-        <input type="number" class="form-control" name="amostra_inicial" min="0" value="0">
+      <h5 class="mt-4">Depósitos Inspecionados</h5>
+      <div class="row g-2">
+        <div class="col">
+          <label class="form-label">A1</label>
+          <input type="number" class="form-control" name="a1" min="0" value="0">
+        </div>
+        <div class="col">
+          <label class="form-label">A2</label>
+          <input type="number" class="form-control" name="a2" min="0" value="0">
+        </div>
+        <div class="col">
+          <label class="form-label">B</label>
+          <input type="number" class="form-control" name="b" min="0" value="0">
+        </div>
+        <div class="col">
+          <label class="form-label">C</label>
+          <input type="number" class="form-control" name="c" min="0" value="0">
+        </div>
+        <div class="col">
+          <label class="form-label">D1</label>
+          <input type="number" class="form-control" name="d1" min="0" value="0">
+        </div>
+        <div class="col">
+          <label class="form-label">D2</label>
+          <input type="number" class="form-control" name="d2" min="0" value="0">
+        </div>
+        <div class="col">
+          <label class="form-label">E</label>
+          <input type="number" class="form-control" name="e" min="0" value="0">
+        </div>
       </div>
-      <div class="col-md-3">
-        <label class="form-label">N. Amostra final</label>
-        <input type="number" class="form-control" name="amostra_final" min="0" value="0">
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">Qtd. de Tubitos</label>
-        <input type="number" class="form-control" name="qtd_tubitos" min="0" value="0">
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">Im. Trat.</label>
-        <select class="form-select" name="im_trat">
-          <option value="X">X</option>
-          <option value="N">N</option>
-        </select>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">Qtde. (Gramas)</label>
-        <input type="number" class="form-control" name="queda_gramas" min="0" value="0">
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">Qtde. Dep. Trat.</label>
-        <input type="number" class="form-control" name="qtd_dep_trat" min="0" value="0">
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">Informação</label>
-        <textarea name="informacao" cols="60" rows="3"></textarea>
-      </div>
-    </div>
 
-    <div class="row g-2 mt-4">
-      <div class="col-12 text-end">
-        <a href="recuperacao.html">RECUPERAÇÃO</a>
-        <button type="submit" class="btn btn-primary">Salvar Registro</button>
-      </div>
-    </div>
-  </form>
+      <div class="row g-2 mt-3">
+        <div class="col-md-3">
+          <label class="form-label">Depósitos Eliminados</label>
+          <input type="number" class="form-control" name="depositos_eliminados" min="0" value="0">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Imóveis Insp. L1</label>
+          <select class="form-select" name="insp_l1">
+            <option value="X">X</option>
+            <option value="N">N</option>
+          </select>
+        </div>
 
-  <hr class="my-4">
-  <h5>Registros Salvos</h5>
-  <table class="table table-bordered table-sm" id="tabela-registros">
-    <thead class="table-light">
-      <tr>
-        <th>Data</th>
-        <th>Quarteirão</th>
-        <th>Lado</th>
-        <th>Logradouro</th>
-        <th>Nº</th>
-        <th>Sequência</th>
-        <th>Complemento</th>
-        <th>Tipo Imóvel</th>
-        <th>Horário Entrada</th>
-        <th>A1</th><th>A2</th><th>B</th><th>C</th><th>D1</th><th>D2</th><th>E</th>
-        <th>Eliminado</th>
-        <th>Imóveis Insp. L1</th>
-        <th>N° Amost. Inicial</th>
-        <th>N° Amost. Final</th>
-        <th>Qtd. Tubitos</th>
-        <th>Im. Trat.</th>
-        <th>Queda (g)</th>
-        <th>Qtd. Dep. Trat.</th>
-        <th>Informação</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-  <div class="table-container"> 
-    <h3 class="text-center mb-4">RESUMO DOS TRABALHOS DE CAMPO</h3>
-    <table class="table table-bordered table-hover">
-      <thead>
-        <tr>
-          <th rowspan="3">IMÓVEIS FECH.</th>
-          <th colspan="5">TIPO DE IMÓVEIS</th>
-          <th colspan="7">DEPÓSITOS INSPECIONADOS</th>
-          <th rowspan="3">DEP. ELIM.</th>
-          <th rowspan="3">IM. INSP.</th>
-          <th rowspan="3">QUANT. AMOSTRAS</th>
-          <th rowspan="3">IM. TRAT.</th>
-          <th rowspan="3">LARV. TRAT.</th>
-          <th rowspan="3">DEP. TRAT.</th>
-        </tr>
-        <tr>
-          <th colspan="5"></th>
-          <th colspan="7"></th>
-        </tr>
-        <tr>
-          <th>R</th>
-          <th>C</th>
-          <th>TB</th>
-          <th>O</th>
-          <th>TOTAL</th>
-          <th>A1</th>
-          <th>A2</th>
-          <th>B</th>
-          <th>C</th>
-          <th>D1</th>
-          <th>D2</th>
-          <th>E</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>1</td>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0,0</td>
-          <td>0</td>
-        </tr>
-      </tbody>
-    </table>
+        <h5 class="mt-4">Amostra / Tratamento (Larvicida)</h5>
+        <div class="col-md-3">
+          <label class="form-label">N. Amostra inicial</label>
+          <input type="number" class="form-control" name="amostra_inicial" min="0" value="0">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">N. Amostra final</label>
+          <input type="number" class="form-control" name="amostra_final" min="0" value="0">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Qtd. de Tubitos</label>
+          <input type="number" class="form-control" name="qtd_tubitos" min="0" value="0">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Im. Trat.</label>
+          <select class="form-select" name="im_trat">
+            <option value="X">X</option>
+            <option value="N">N</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Qtde. (Gramas)</label>
+          <input type="number" class="form-control" name="queda_gramas" min="0" value="0">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Qtde. Dep. Trat.</label>
+          <input type="number" class="form-control" name="qtd_dep_trat" min="0" value="0">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Informação</label>
+          <textarea name="informacao" cols="60" rows="3"></textarea>
+        </div>
+      </div>
+
+      <div class="row g-2 mt-4">
+        <div class="col-12 text-end">
+          <button type="submit" class="btn btn-primary">Salvar Registro</button>
+        </div>
+      </div>
+    </form>
   </div>
-</div>
 
-<script src="js/registros.js"></script>
+  <script src="./js/registros.js"></script>
+  <script>
+    const menuToggle = document.getElementById("menuToggle");
+    const sidebar = document.getElementById("sidebar");
+
+    menuToggle.addEventListener("click", () => {
+      sidebar.classList.toggle("show");
+      sidebar.classList.toggle("hidden");
+    });
+  </script>
 </body>
 </html>

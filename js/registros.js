@@ -61,7 +61,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (turnoEnviado && localStorage.getItem('turnoId')) return;
 
     turnoSalvo.ciclo = parseInt(turnoSalvo.ciclo);
-    turnoSalvo.concluida = turnoSalvo.concluida === 'true';
 
     try {
       const response = await fetch('http://localhost:4000/turno', {

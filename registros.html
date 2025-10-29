@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tabela de Registros</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background-color: #f5f7fa;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 15px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 900px;
+    }
+
+    thead {
+      background-color: #007bff;
+      color: white;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    th, td {
+      padding: 10px 12px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+      white-space: nowrap;
+    }
+
+    tbody tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    tbody tr:hover {
+      background-color: #e9f3ff;
+      transition: 0.2s;
+    }
+
+    th {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    td {
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 768px) {
+      th, td {
+        padding: 8px;
+        font-size: 0.8rem;
+      }
+    }
+        .menu-toggle {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      background-color: #0d6efd;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 8px 12px;
+      font-size: 20px;
+      cursor: pointer;
+      z-index: 1100;
+      transition: background 0.3s;
+    }
+
+    .menu-toggle:hover {
+      background-color: #0b5ed7;
+    }
+
+    /* ===== CONTEÚDO PRINCIPAL ===== */
+    .content {
+      margin-left: 260px;
+      padding: 30px;
+      flex: 1;
+      width: 100%;
+      transition: margin-left 0.3s ease;
+    }
+
+    .sidebar.hidden + .content {
+      margin-left: 0;
+    }
+
+    textarea {
+      width: 100%;
+      resize: vertical;
+    }
+    /* ===== MENU LATERAL ===== */
+    .sidebar {
+      width: 240px;
+      background-color: #0d6efd;
+      color: #fff;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      padding: 20px 10px;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(0);
+      transition: transform 0.3s ease;
+      z-index: 1000;
+    }
+
+    .sidebar.hidden {
+      transform: translateX(-100%);
+    }
+
+    .sidebar h4 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 1.2rem;
+    }
+
+    .sidebar a {
+      color: #fff;
+      text-decoration: none;
+      display: block;
+      padding: 10px 15px;
+      border-radius: 8px;
+      margin-bottom: 5px;
+      transition: background 0.3s;
+    }
+
+    .sidebar a:hover {
+      background-color: #0b5ed7;
+    }
+
+    .sidebar .logout {
+      margin-top: auto;
+      background: #dc3545;
+      text-align: center;
+    }
+    /* ===== RESPONSIVIDADE ===== */
+    @media (max-width: 992px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .sidebar.show {
+        transform: translateX(0);
+      }
+      .content {
+        margin-left: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- BOTÃO PARA ABRIR MENU -->
+  <button class="menu-toggle" id="menuToggle">☰</button>
+
+  <!-- MENU LATERAL -->
+  <nav class="sidebar hidden" id="sidebar">
+    <h4>Menu</h4>
+    <a href="index.html">🏠 Início</a>
+    <a href="turno.html">🕒 Turno Diário</a>
+    <a href="registro.html">📝 Registro</a>
+    <a href="recuperacao.html">📂 Recuperação</a>
+    <a href="final.html">📊 Resumo</a>
+    <a href="#" class="logout">🚪 Sair</a>
+  </nav>
+
+  <h1>Tabela de Registros</h1>
+
+  <div class="table-container">
+    <table id="tabela-registros">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Quarteirão</th>
+          <th>Lado</th>
+          <th>Logradouro</th>
+          <th>Nº</th>
+          <th>Sequência</th>
+          <th>Complemento</th>
+          <th>Tipo Imóvel</th>
+          <th>Horário Entrada</th>
+          <th>A1</th><th>A2</th><th>B</th><th>C</th><th>D1</th><th>D2</th><th>E</th>
+          <th>Eliminado</th>
+          <th>Imóveis Insp. L1</th>
+          <th>N° Amost. Inicial</th>
+          <th>N° Amost. Final</th>
+          <th>Qtd. Tubitos</th>
+          <th>Im. Trat.</th>
+          <th>Queda (g)</th>
+          <th>Qtd. Dep. Trat.</th>
+          <th>Informação</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>27/10/2025</td>
+          <td>15</td>
+          <td>A</td>
+          <td>Rua das Flores</td>
+          <td>123</td>
+          <td>01</td>
+          <td>-</td>
+          <td>Residencial</td>
+          <td>08:30</td>
+          <td>✔</td><td>✔</td><td>✔</td><td>✔</td><td>✔</td><td>✔</td><td>✔</td>
+          <td>Sim</td>
+          <td>1</td>
+          <td>10</td>
+          <td>20</td>
+          <td>5</td>
+          <td>2</td>
+          <td>10</td>
+          <td>3</td>
+          <td>Sem observações</td>
+        </tr>
+        <tr>
+          <td>27/10/2025</td>
+          <td>15</td>
+          <td>A</td>
+          <td>Rua das Flores</td>
+          <td>123</td>
+          <td>01</td>
+          <td>-</td>
+          <td>Residencial</td>
+          <td>08:30</td>
+          <td>✔</td><td>✔</td><td>✔</td><td>✔</td><td>✔</td><td>✔</td><td>✔</td>
+          <td>Sim</td>
+          <td>1</td>
+          <td>10</td>
+          <td>20</td>
+          <td>5</td>
+          <td>2</td>
+          <td>10</td>
+          <td>3</td>
+          <td>Sem observações</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const menuToggle = document.getElementById("menuToggle");
+    const sidebar = document.getElementById("sidebar");
+
+    menuToggle.addEventListener("click", () => {
+      sidebar.classList.toggle("show");
+      sidebar.classList.toggle("hidden");
+    });
+  </script>
+</body>
+</html>
