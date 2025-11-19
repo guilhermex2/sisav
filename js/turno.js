@@ -1,22 +1,42 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('form-turno');
+/**
+ * @fileoverview Gerenciamento de turnos diários de trabalho
+ * @module turno
+ * 
+ * Este módulo permite:
+ * - Cadastrar turno diário (zona, bairro, setor, etc)
+ * - Verificar se já existe turno cadastrado para o dia
+ * - Redirecionar automaticamente se turno já estiver cadastrado
+ */
 
-    const turnoSalvo = JSON.parse(localStorage.getItem('turnoDiario'));
-    const hoje = new Date().toISOString().split('T')[0];
+import { openDB } from './db.js';
 
-    if (turnoSalvo && turnoSalvo.data === hoje) {
+document.addEventListener('DOMContentLoaded', async () => {
+  const db = await openDB();
+  const form = document.getElementById('form-turno');
+  const hoje = new Date().toISOString().split('T')[0];
+
+  // Verifica se já existe turno salvo para o dia
+  const tx = db.transaction('turnos', 'readonly');
+  const store = tx.objectStore('turnos');
+  const request = store.get(hoje);
+
+  request.onsuccess = (event) => {
+    if (event.target.result) {
       window.location.href = 'index.html';
     }
+  };
 
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-      const formData = new FormData(form);
-      const dados = Object.fromEntries(formData.entries());
+    const formData = new FormData(form);
+    const dados = Object.fromEntries(formData.entries());
+    dados.data = dados.data || hoje;
 
-      // Armazena os dados do turno
-      localStorage.setItem('turnoDiario', JSON.stringify(dados));
+    const tx = db.transaction('turnos', 'readwrite');
+    const store = tx.objectStore('turnos');
+    await store.put(dados);
 
-      window.location.href = 'index.html';
-    });
+    window.location.href = 'index.html';
   });
+});

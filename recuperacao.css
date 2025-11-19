@@ -21,19 +21,85 @@ nav{
   display: flex;
   flex-direction: column;
 }
-a{
-  text-decoration: none;
-  color: rgb(255, 255, 255);
-  font-size: 1.2rem;
-  font-weight: bold;
-  background-color: rgb(18, 61, 255);
-  padding: 10px;
-  border-radius: 5px;
-  width: 200px;
-}
-a:hover{
-  background-color: rgb(51, 88, 255);
-}
+
 .table-container{
   margin-top: 100px;
 }
+    /* ===== MENU LATERAL ===== */
+    .sidebar {
+      width: 240px;
+      background-color: #0d6efd;
+      color: #fff;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      padding: 20px 10px;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(0);
+      transition: transform 0.3s ease;
+      z-index: 1000;
+    }
+
+    .sidebar.hidden {
+      transform: translateX(-100%);
+    }
+
+    .sidebar h4 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 1.2rem;
+    }
+
+    .sidebar a {
+      color: #fff;
+      text-decoration: none;
+      display: block;
+      padding: 10px 15px;
+      border-radius: 8px;
+      margin-bottom: 5px;
+      transition: background 0.3s;
+    }
+
+    .sidebar a:hover {
+      background-color: #0b5ed7;
+    }
+
+    .sidebar .logout {
+      margin-top: auto;
+      background: #dc3545;
+      text-align: center;
+    }
+
+    /* ===== BOTÃO DE MENU ===== */
+    .menu-toggle {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      background-color: #0d6efd;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 8px 12px;
+      font-size: 20px;
+      cursor: pointer;
+      z-index: 1100;
+      transition: background 0.3s;
+    }
+
+    .menu-toggle:hover {
+      background-color: #0b5ed7;
+    }
+        /* ===== RESPONSIVIDADE ===== */
+    @media (max-width: 992px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .sidebar.show {
+        transform: translateX(0);
+      }
+      .content {
+        margin-left: 0;
+      }
+    }

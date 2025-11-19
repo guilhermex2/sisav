@@ -5,167 +5,262 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Recuperação - Serviço Antivetorial</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="recuperacao.css">
+  <style>
+    body {
+      display: flex;
+      min-height: 100vh;
+      background-color: #f8f9fa;
+      overflow-x: hidden;
+    }
 
+    /* ===== MENU LATERAL ===== */
+    .sidebar {
+      width: 240px;
+      background-color: #0d6efd;
+      color: #fff;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      padding: 20px 10px;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(0);
+      transition: transform 0.3s ease;
+      z-index: 1000;
+    }
+
+    .sidebar.hidden {
+      transform: translateX(-100%);
+    }
+
+    .sidebar h4 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 1.2rem;
+    }
+
+    .sidebar a {
+      color: #fff;
+      text-decoration: none;
+      display: block;
+      padding: 10px 15px;
+      border-radius: 8px;
+      margin-bottom: 5px;
+      transition: background 0.3s;
+    }
+
+    .sidebar a:hover {
+      background-color: #0b5ed7;
+    }
+
+    .sidebar .logout {
+      margin-top: auto;
+      background: #dc3545;
+      text-align: center;
+    }
+
+    /* ===== BOTÃO DE MENU ===== */
+    .menu-toggle {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      background-color: #0d6efd;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 8px 12px;
+      font-size: 20px;
+      cursor: pointer;
+      z-index: 1100;
+      transition: background 0.3s;
+    }
+
+    .menu-toggle:hover {
+      background-color: #0b5ed7;
+    }
+
+    /* ===== CONTEÚDO PRINCIPAL ===== */
+    .content {
+      margin-left: 260px;
+      padding: 30px;
+      flex: 1;
+      width: 100%;
+      transition: margin-left 0.3s ease;
+    }
+
+    .sidebar.hidden + .content {
+      margin-left: 0;
+    }
+
+    textarea {
+      width: 100%;
+      resize: vertical;
+    }
+
+    /* ===== TABELAS ===== */
+    .table-container {
+      margin-top: 40px;
+    }
+
+    table {
+      background-color: white;
+    }
+
+    th {
+      text-align: center;
+    }
+
+    /* ===== RESPONSIVIDADE ===== */
+    @media (max-width: 992px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .sidebar.show {
+        transform: translateX(0);
+      }
+      .content {
+        margin-left: 0;
+      }
+    }
+  </style>
 </head>
 <body>
-<div class="container">
-  <nav>
-    <a href="index.html">REGISTRO DIÁRIO</a>
+
+  <!-- BOTÃO PARA ABRIR MENU -->
+  <button class="menu-toggle" id="menuToggle">☰</button>
+
+  <!-- MENU LATERAL -->
+  <nav class="sidebar hidden" id="sidebar">
+    <h4>Menu</h4>
+    <a href="index.html">🏠 Início</a>
+    <a href="turno.html">🕒 Turno Diário</a>
+    <a href="registros.html">📝 Registros</a>
+    <a href="recuperacao.html">📂 Recuperação</a>
+    <a href="reg-recuperacao.html">📂 Registros Recuperação</a>
+    <a href="final.html">📊 Resumo</a>
+    <a href="#" class="logout">🚪 Sair</a>
   </nav>
-  <h4 class="text-center mb-3">REGISTRO DE RECUPERAÇÃO</h4>
 
-  <form id="recuperacaoForm">
-    <div class="row g-2 mb-3">
-      <div class="col-md-3">
-        <label class="form-label">Data da Atividade</label>
-        <input type="date" class="form-control" name="data">
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">Setor</label>
-        <input type="text" class="form-control" name="setor">
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">Lado</label>
-        <input type="text" class="form-control" name="lado">
-      </div>
-      <div class="col-md-5">
-        <label class="form-label">Nome do Logradouro</label>
-        <input type="text" class="form-control" name="logradouro">
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">Nº</label>
-        <input type="text" class="form-control" name="numero">
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">Sequência</label>
-        <input type="text" class="form-control" name="sequencia">
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">Complemento</label>
-        <input type="text" class="form-control" name="complemento">
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">Tipo do Imóvel</label>
-        <select class="form-select" name="tipo_imovel">
-          <option value="R">R</option>
-          <option value="R-F">R-F</option>
-        </select>
-      </div>
-    </div>
+  <!-- CONTEÚDO PRINCIPAL -->
+  <div class="content container">
+    <h3 class="text-center mb-4">REGISTRO DE RECUPERAÇÃO</h3>
 
-    <h6>Tratamento</h6>
-    <div class="row g-2">
-      <div class="col-md-2">
-        <label class="form-label">Imóveis Trat.</label>
-        <input type="number" class="form-control" name="im_trat" value="0">
+    <form id="recuperacaoForm">
+      <div class="row g-2 mb-3">
+        <div class="col-md-3">
+          <label class="form-label">Data da Atividade</label>
+          <input type="date" class="form-control" name="data">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Setor</label>
+          <input type="text" class="form-control" name="setor">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Lado</label>
+          <input type="text" class="form-control" name="lado">
+        </div>
+        <div class="col-md-5">
+          <label class="form-label">Nome do Logradouro</label>
+          <input type="text" class="form-control" name="logradouro">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Nº</label>
+          <input type="text" class="form-control" name="numero">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Sequência</label>
+          <input type="text" class="form-control" name="sequencia">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Complemento</label>
+          <input type="text" class="form-control" name="complemento">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Tipo do Imóvel</label>
+          <select class="form-select" name="tipo_imovel">
+            <option value="R">R</option>
+            <option value="R-F">R-F</option>
+            <option value="C">C</option>
+            <option value="TB">TB</option>
+            <option value="O">O</option>
+          </select>
+        </div>
       </div>
-      <div class="col-md-2">
-        <label class="form-label">Larvicida</label>
-        <input type="text" class="form-control" name="larvicida">
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">Qtd. Germinal</label>
-        <input type="number" class="form-control" name="qtde_germinal" value="0">
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">Qtd. Dep. Trat.</label>
-        <input type="number" class="form-control" name="qtde_dep_trat" value="0">
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">Depósitos Eliminados</label>
-        <input type="number" class="form-control" name="depositos_eliminados" value="0">
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">Observações</label>
-        <input type="text" class="form-control" name="obs">
-      </div>
-    </div>
 
-    <div class="row g-2 mt-3">
-      <div class="col-12 text-end">
-        <button type="submit" class="btn btn-success">Salvar Recuperação</button>
+      <h5 class="mt-4">Tratamento</h5>
+      <div class="row g-2">
+        <div class="col-md-2">
+          <label class="form-label">Imóveis Trat.</label>
+          <input type="number" class="form-control" name="im_trat" value="0">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Larvicida</label>
+          <input type="text" class="form-control" name="larvicida">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Qtd. Germinal</label>
+          <input type="number" class="form-control" name="qtde_germinal" value="0">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Qtd. Dep. Trat.</label>
+          <input type="number" class="form-control" name="qtde_dep_trat" value="0">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Depósitos Eliminados</label>
+          <input type="number" class="form-control" name="depositos_eliminados" value="0">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Observações</label>
+          <input type="text" class="form-control" name="obs">
+        </div>
       </div>
-    </div>
-  </form>
 
-  <hr class="my-4">
-  <table class="table table-bordered table-sm" id="tabela-recuperacoes">
-    <thead class="table-light">
-      <tr>
-        <th>Data</th><th>Setor</th><th>Lado</th><th>Logradouro</th><th>Tipo Imóvel</th>
-        <th>Trat.</th><th>Larvicida</th><th>Germinal</th><th>Dep. Trat.</th><th>Dep. Elim.</th><th>Obs.</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-  <div class="table-container"> 
-  <h3 class="text-center mb-4">RESUMO DOS TRABALHOS DE CAMPO</h3>
-        <table class="table table-bordered table-hover">
-            <thead>
-                <tr>
-                    <th colspan="5">TIPO DE IMÓVEIS</th>                    
-                    <th rowspan="3">DEP. ELIM.</th>
-                    <th rowspan="3">IM. TRAT.</th>
-                    <th rowspan="3">LARV. TRAT.</th>
-                    <th rowspan="3">DEP. TRAT.</th>
-                </tr>
-                <tr>
-                    <th>R</th>
-                    <th>C</th>
-                    <th>TB</th>
-                    <th>O</th>
-                    <th>TOTAL</th>
-            
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>1</td>
-                    <td>0</td>
-                    <td>0</td>
-                    <td>0</td>
-                    <td>1</td>
-                    <td>0</td>
-                    <td>0</td>
-                    <td>0</td>
-                    <td>0</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
-</div>
+      <div class="row g-2 mt-4">
+        <div class="col-12 text-end">
+          <button type="submit" class="btn btn-primary">Salvar Recuperação</button>
+        </div>
+      </div>
+    </form> 
+  </div>
 
-<script>
-  const formRec = document.getElementById("recuperacaoForm");
-  const tabelaRec = document.querySelector("#tabela-recuperacoes tbody");
+  <script>
+    const menuToggle = document.getElementById("menuToggle");
+    const sidebar = document.getElementById("sidebar");
 
-  formRec.addEventListener("submit", function(e) {
-    e.preventDefault();
-    const dados = Object.fromEntries(new FormData(formRec).entries());
-    const lista = JSON.parse(localStorage.getItem("recuperacoes") || "[]");
-    lista.push(dados);
-    localStorage.setItem("recuperacoes", JSON.stringify(lista));
-    formRec.reset();
-    carregarRecuperacoes();
-  });
-
-  function carregarRecuperacoes() {
-    const lista = JSON.parse(localStorage.getItem("recuperacoes") || "[]");
-    tabelaRec.innerHTML = "";
-    lista.forEach(d => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${d.data}</td><td>${d.setor}</td><td>${d.lado}</td><td>${d.logradouro}</td><td>${d.tipo_imovel}</td>
-        <td>${d.im_trat}</td><td>${d.larvicida}</td><td>${d.qtde_germinal}</td>
-        <td>${d.qtde_dep_trat}</td><td>${d.depositos_eliminados}</td><td>${d.obs}</td>
-      `;
-      tabelaRec.appendChild(tr);
+    menuToggle.addEventListener("click", () => {
+      sidebar.classList.toggle("show");
+      sidebar.classList.toggle("hidden");
     });
-  }
 
-  window.addEventListener("DOMContentLoaded", carregarRecuperacoes);
-</script>
+    const formRec = document.getElementById("recuperacaoForm");
+    const tabelaRec = document.querySelector("#tabela-recuperacoes tbody");
+
+    formRec.addEventListener("submit", function(e) {
+      e.preventDefault();
+      const dados = Object.fromEntries(new FormData(formRec).entries());
+      const lista = JSON.parse(localStorage.getItem("recuperacoes") || "[]");
+      lista.push(dados);
+      localStorage.setItem("recuperacoes", JSON.stringify(lista));
+      formRec.reset();
+      carregarRecuperacoes();
+    });
+
+    function carregarRecuperacoes() {
+      const lista = JSON.parse(localStorage.getItem("recuperacoes") || "[]");
+      tabelaRec.innerHTML = "";
+      lista.forEach(d => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${d.data}</td><td>${d.setor}</td><td>${d.lado}</td><td>${d.logradouro}</td><td>${d.tipo_imovel}</td>
+          <td>${d.im_trat}</td><td>${d.larvicida}</td><td>${d.qtde_germinal}</td>
+          <td>${d.qtde_dep_trat}</td><td>${d.depositos_eliminados}</td><td>${d.obs}</td>
+        `;
+        tabelaRec.appendChild(tr);
+      });
+    }
+
+    window.addEventListener("DOMContentLoaded", carregarRecuperacoes);
+  </script>
 </body>
 </html>
