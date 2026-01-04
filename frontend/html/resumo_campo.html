@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resumo do Agente - Serviço Antivetorial</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+            /* ===== MENU LATERAL ===== */
+    .sidebar {
+      width: 240px;
+      background-color: #0d6efd;
+      color: #fff;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      padding: 20px 10px;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(0);
+      transition: transform 0.3s ease;
+      z-index: 1000;
+    }
+
+    .sidebar.hidden {
+      transform: translateX(-100%);
+    }
+
+    .sidebar h4 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 1.2rem;
+    }
+
+    .sidebar a {
+      color: #ccc;
+      text-decoration: none;
+      display: block;
+      padding: 10px 15px;
+      border-radius: 8px;
+      margin-bottom: 5px;
+      transition: background 0.3s;
+    }
+
+    .sidebar a:hover {
+      background-color: #0b5ed7;
+    }
+
+    .sidebar .logout {
+      margin-top: auto;
+      background: #dc3545;
+      text-align: center;
+    }
+
+    /* ===== BOTÃO DE MENU ===== */
+    .menu-toggle {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      background-color: #0d6efd;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 8px 12px;
+      font-size: 20px;
+      cursor: pointer;
+      z-index: 1100;
+      transition: background 0.3s;
+    }
+
+    .menu-toggle:hover {
+      background-color: #0b5ed7;
+    }
+    /* ===== RESPONSIVIDADE ===== */
+    @media (max-width: 992px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .sidebar.show {
+        transform: translateX(0);
+      }
+      .content {
+        margin-left: 0;
+      }
+    }
+    body {
+      background-color: #f4f6f9;
+    }
+
+    .page-title {
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .card {
+      border-radius: 14px;
+    }
+
+    .indicator {
+      font-size: 1.6rem;
+      font-weight: 700;
+    }
+
+    .indicator-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: #6c757d;
+    }
+
+    table th, table td {
+      text-align: center;
+      vertical-align: middle;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- BOTÃO PARA ABRIR MENU -->
+  <button class="menu-toggle" id="menuToggle">☰</button>
+
+  <!-- MENU LATERAL -->
+  <nav class="sidebar hidden" id="sidebar">
+    <h4>Menu</h4>
+    <a href="turno.html" style="color: white;">🕒 Turno Diário</a>
+    <a href="index.html">🏠 Início</a>
+    <a href="registros.html">📝 Registros</a>
+    <a href="recuperacao.html">📂 Recuperação</a>
+    <a href="reg-recuperacao.html">📂 Registros Recuperação</a>
+    <a href="resumo_campo.html">📊 Resumo</a>
+    <a href="#" class="logout">🚪 Sair</a>
+  </nav>
+<div class="container my-4">
+
+  <!-- TÍTULO -->
+  <h4 class="text-center page-title mb-3">
+    Resumo do Trabalho de Campo
+  </h4>
+
+  <p class="text-center text-muted mb-4">
+    Conferência do seu registro diário
+  </p>
+
+  <!-- STATUS DO TURNO -->
+  <div class="card mb-3 shadow-sm">
+    <div class="card-body d-flex justify-content-between align-items-center">
+      <div>
+        <strong>Data:</strong> 16/12/2025<br>
+        <strong>Bairro:</strong> Jardim Primavera
+      </div>
+      <span class="badge bg-warning text-dark px-3 py-2">
+        EM ANDAMENTO
+      </span>
+    </div>
+  </div>
+
+  <!-- INDICADORES SIMPLES -->
+  <div class="row g-3 mb-4">
+
+    <div class="col-6">
+      <div class="card shadow-sm text-center p-3">
+        <div class="indicator">48</div>
+        <div class="indicator-label">Imóveis Inspecionados</div>
+      </div>
+    </div>
+
+    <div class="col-6">
+      <div class="card shadow-sm text-center p-3">
+        <div class="indicator">6</div>
+        <div class="indicator-label">Focos Encontrados</div>
+      </div>
+    </div>
+
+    <div class="col-6">
+      <div class="card shadow-sm text-center p-3">
+        <div class="indicator">12</div>
+        <div class="indicator-label">Imóveis Fechados</div>
+      </div>
+    </div>
+
+    <div class="col-6">
+      <div class="card shadow-sm text-center p-3">
+        <div class="indicator">3</div>
+        <div class="indicator-label">Tratamentos Realizados</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TABELA RESUMIDA -->
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white fw-semibold">
+      Resumo dos Trabalhos de Campo
+    </div>
+
+    <div class="card-body table-responsive">
+
+      <table class="table table-bordered table-hover">
+        <thead class="table-light">
+          <tr>
+            <th>Imóveis Fechados</th>
+            <th>Imóveis Inspecionados</th>
+            <th>Depósitos Eliminados</th>
+            <th>Larvas Tratadas</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td>12</td>
+            <td>48</td>
+            <td>9</td>
+            <td>3</td>
+          </tr>
+        </tbody>
+
+      </table>
+
+    </div>
+  </div>
+
+  <!-- AÇÕES -->
+  <div class="text-center mt-4">
+    <a href="index.html" class="btn btn-outline-secondary me-2">
+      Voltar ao Registro
+    </a>
+    <button class="btn btn-success">
+      Confirmar e Finalizar Turno
+    </button>
+  </div>
+
+</div>
+  <script>
+    const menuToggle = document.getElementById("menuToggle");
+    const sidebar = document.getElementById("sidebar");
+
+    menuToggle.addEventListener("click", () => {
+      sidebar.classList.toggle("show");
+      sidebar.classList.toggle("hidden");
+    });
+  </script>
+</body>
+</html>

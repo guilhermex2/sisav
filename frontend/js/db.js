@@ -5,5 +5,6 @@ export const db = new Dexie("antivetorialDB");
 
 db.version(1).stores({
   turnos: "data, municipio, ciclo, localidade, categoria_localidade, zona, atividade, agente",
-  registros: "++id, data_turno"
+  registros: "++id, data_turno",
+  recuperacao: "++id, data_turno"
 });
