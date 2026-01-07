@@ -53,13 +53,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         <td>${reg.tipo_imovel || reg.tipoImovel || "-"}</td>
         <td>${reg.horario_entrada || reg.horarioEntrada || "-"}</td>
 
-        <td>${(reg.a1 || reg.A1) ? "✔" : "-"}</td>
-        <td>${(reg.a2 || reg.A2) ? "✔" : "-"}</td>
-        <td>${(reg.b  || reg.B)  ? "✔" : "-"}</td>
-        <td>${(reg.c  || reg.C)  ? "✔" : "-"}</td>
-        <td>${(reg.d1 || reg.D1) ? "✔" : "-"}</td>
-        <td>${(reg.d2 || reg.D2) ? "✔" : "-"}</td>
-        <td>${(reg.e  || reg.E)  ? "✔" : "-"}</td>
+        <td>${(reg.a1 || reg.A1)}</td>
+        <td>${(reg.a2 || reg.A2)}</td>
+        <td>${(reg.b  || reg.B) }</td>
+        <td>${(reg.c  || reg.C) }</td>
+        <td>${(reg.d1 || reg.D1)}</td>
+        <td>${(reg.d2 || reg.D2)}</td>
+        <td>${(reg.e  || reg.E) }</td>
 
         <td>${reg.depositos_eliminados || reg.eliminado || "-"}</td>
         <td>${reg.insp_l1 || reg.imoveisL1 || "-"}</td>
