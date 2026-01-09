@@ -102,7 +102,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       btnFinalizar.disabled = true;
 
       alert("Turno finalizado com sucesso!");
-      window.location.href = "ficha-registro.html";
+      window.location.href = "turno.html";
     });
 
   } catch (err) {

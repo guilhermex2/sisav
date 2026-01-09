@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const turnoHoje = await db.turnos.get(hoje);
 
   if (turnoHoje && turnoHoje.status !== "finalizado") {
-    window.location.href = "registros.html";
+    window.location.href = "turno.html";
   }
 
   const form = document.getElementById("form-turno");
