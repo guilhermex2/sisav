@@ -9,19 +9,25 @@ document.addEventListener("DOMContentLoaded", async () => {
   const badge = document.querySelector(".badge");
 
   try {
-    // 🔹 Buscar último turno (ativo)
-    const turno = await db.turnos
-      .orderBy("data")
-      .reverse()
-      .first();
+    // 🔑 Buscar turno ativo explícito
+    const dataTurnoAtivo = localStorage.getItem("turnoAtivo");
 
-    if (!turno || turno.status === "finalizado") {
+    if (!dataTurnoAtivo) {
       alert("Nenhum turno ativo encontrado.");
       window.location.href = "turno.html";
       return;
     }
 
-    // 🔹 Preencher dados do turno
+    const turno = await db.turnos.get(dataTurnoAtivo);
+
+    if (!turno || turno.finalizadoEm) {
+      alert("Este turno já foi finalizado.");
+      localStorage.removeItem("turnoAtivo");
+      window.location.href = "turno.html";
+      return;
+    }
+
+    // 🔹 Dados do turno
     elData.textContent = new Date(turno.data).toLocaleDateString("pt-BR");
     elBairro.textContent = turno.localidade || "Não informado";
 
@@ -31,9 +37,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       .equals(turno.data)
       .toArray();
 
-    console.table(registros); // 🔎 debug visual
-
-    // ✅ CÁLCULO CORRETO DO RESUMO
+    // 🔹 Resumo
     const resumo = {
       inspecionados: registros.length,
       focos: 0,
@@ -51,30 +55,22 @@ document.addEventListener("DOMContentLoaded", async () => {
       const d2 = parseInt(r.d2, 10) || 0;
       const e  = parseInt(r.e, 10)  || 0;
 
-      // 🚪 Imóveis fechados
       resumo.fechados += c;
-
-      // 🦟 Focos encontrados
       resumo.focos += (a1 + a2 + b + d1 + d2 + e);
 
-      // 🧪 Tratamentos realizados
       if (String(r.im_trat).toUpperCase() === "X") {
         resumo.tratamentos += 1;
       }
 
-      // 🧴 Depósitos eliminados
       resumo.depositos += parseInt(r.depositos_eliminados, 10) || 0;
     });
 
-    console.log("Resumo FINAL:", resumo); // 🔎 debug final
-
-    // 🔹 Atualizar indicadores
+    // 🔹 UI
     indicadores[0].textContent = resumo.inspecionados;
     indicadores[1].textContent = resumo.focos;
     indicadores[2].textContent = resumo.fechados;
     indicadores[3].textContent = resumo.tratamentos;
 
-    // 🔹 Atualizar tabela
     tbody.innerHTML = `
       <tr>
         <td>${resumo.fechados}</td>
@@ -84,11 +80,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       </tr>
     `;
 
-    // 🔹 Status visual
     badge.textContent = "EM ANDAMENTO";
     badge.className = "badge bg-warning text-dark px-3 py-2";
 
-    // 🔹 Finalizar turno
+    // 🔒 Finalizar turno
     btnFinalizar.addEventListener("click", async () => {
       if (!confirm("Deseja finalizar este turno?")) return;
 
@@ -96,6 +91,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         finalizadoEm: new Date().toISOString(),
         resumo
       });
+
+      localStorage.removeItem("turnoAtivo");
 
       badge.textContent = "FINALIZADO";
       badge.className = "badge bg-success px-3 py-2";

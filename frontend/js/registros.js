@@ -3,14 +3,19 @@ import { db } from "./db.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
 
-  const turnoAtivo = await db.turnos
-    .orderBy("data")
-    .reverse()
-    .filter(t => !t.finalizadoEm)
-    .first();
+  const dataTurnoAtivo = localStorage.getItem("turnoAtivo");
 
-  if (!turnoAtivo) {
+  if (!dataTurnoAtivo) {
     alert("Não há turno ativo para registrar imóveis.");
+    window.location.href = "turno.html";
+    return;
+  }
+
+  const turnoAtivo = await db.turnos.get(dataTurnoAtivo);
+
+  if (!turnoAtivo || turnoAtivo.finalizadoEm) {
+    alert("Este turno já foi finalizado.");
+    localStorage.removeItem("turnoAtivo");
     window.location.href = "turno.html";
     return;
   }
@@ -20,17 +25,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    // 🔒 segurança extra
-    if (turnoAtivo.finalizadoEm) {
-      alert("Este turno já foi finalizado.");
-      return;
-    }
-
     const dados = Object.fromEntries(new FormData(form));
 
     await db.registros.add({
       ...dados,
-      data_turno: turnoAtivo.data,
+      data_turno: turnoAtivo.data, // 🔑 vínculo lógico
       criado_em: new Date().toISOString()
     });
 

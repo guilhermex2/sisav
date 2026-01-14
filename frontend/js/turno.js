@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const turnoHoje = await db.turnos.get(hoje);
 
   if (turnoHoje && turnoHoje.status !== "finalizado") {
+    localStorage.setItem("turnoAtivo", turnoHoje.data);
     window.location.href = "turno.html";
   }
 
@@ -35,6 +36,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 
     await db.turnos.put(turno);
+
+    // salva turno ativo
+    localStorage.setItem("turnoAtivo", turno.data);
 
     alert("Turno salvo com sucesso!");
 
