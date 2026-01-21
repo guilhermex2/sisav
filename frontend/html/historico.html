@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Histórico de Turnos</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <style>
+
+        /* ===== MENU LATERAL ===== */
+    .sidebar {
+      width: 240px;
+      background-color: #0d6efd;
+      color: #fff;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      padding: 20px 10px;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(0);
+      transition: transform 0.3s ease;
+      z-index: 1000;
+    }
+
+    .sidebar.hidden {
+      transform: translateX(-100%);
+    }
+
+    .sidebar h4 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 1.2rem;
+    }
+
+    .sidebar a {
+      color: #ccc;
+      text-decoration: none;
+      display: block;
+      padding: 10px 15px;
+      border-radius: 8px;
+      margin-bottom: 5px;
+      transition: background 0.3s;
+    }
+
+    .sidebar a:hover {
+      background-color: #0b5ed7;
+    }
+
+    .sidebar .logout {
+      margin-top: auto;
+      background: #dc3545;
+      text-align: center;
+    }
+
+    /* ===== BOTÃO DE MENU ===== */
+    .menu-toggle {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      background-color: #0d6efd;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 8px 12px;
+      font-size: 20px;
+      cursor: pointer;
+      z-index: 1100;
+      transition: background 0.3s;
+    }
+
+    .menu-toggle:hover {
+      background-color: #0b5ed7;
+    }
+    /* ===== RESPONSIVIDADE ===== */
+    @media (max-width: 992px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .sidebar.show {
+        transform: translateX(0);
+      }
+      .content {
+        margin-left: 0;
+      }
+    }
+  </style>
+</head>
+<body class="bg-light">
+    <!-- BOTÃO PARA ABRIR MENU -->
+  <button class="menu-toggle" id="menuToggle">☰</button>
+  <!-- MENU LATERAL -->
+  <nav class="sidebar hidden" id="sidebar">
+    <h4>Menu</h4>
+    <a href="turno.html" style="color: white;">🕒 Turno Diário</a>
+    <a href="ficha-registro.html">🏠 Campo</a>
+    <a href="historico.html">📋 Histórico</a>
+    <a href="tabela-registros.html">📝 Tabela Registros</a>
+    <a href="ficha-recuperacao.html">📂 Recuperação</a>
+    <a href="tabela-recuperacao.html">📂 Tabela Registros Recuperação</a>
+    <a href="resumo_campo.html">📊 Resumo</a>
+    <a href="#" class="logout">🚪 Sair</a>
+  </nav>
+
+  <div class="container py-4">
+    <h3 class="mb-4">📊 Histórico de Turnos</h3>
+
+    <div id="listaTurnos" class="d-grid gap-3"></div>
+
+    <p id="semDados" class="text-muted text-center d-none">
+      Nenhum turno finalizado encontrado.
+    </p>
+  </div>
+
+  <script type="module" src="../js/historico.js"></script>
+    <script>
+    const menuToggle = document.getElementById("menuToggle");
+    const sidebar = document.getElementById("sidebar");
+    const btnSair = document.querySelector(".logout")
+
+    menuToggle.addEventListener("click", () => {
+      sidebar.classList.toggle("show");
+      sidebar.classList.toggle("hidden");
+    });
+
+    btnSair.addEventListener('click', () => {
+      //Redirecionar ou usar para logout ( limpar o db local e voltar para turno)
+      console.log('clicou em sair!')
+    })
+    console.log("Turno Diário page loaded.");
+  </script>
+</body>
+</html>

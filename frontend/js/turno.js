@@ -4,11 +4,14 @@ import { db } from "./db.js";
 document.addEventListener("DOMContentLoaded", async () => {
   const hoje = new Date().toISOString().split("T")[0];
   const turnoHoje = await db.turnos.get(hoje);
-
+  
+  //Está recarregando a pagina infinitamente, procurar correção
+  /*
   if (turnoHoje && turnoHoje.status !== "finalizado") {
     localStorage.setItem("turnoAtivo", turnoHoje.data);
     window.location.href = "turno.html";
   }
+  */
 
   const form = document.getElementById("form-turno");
 
