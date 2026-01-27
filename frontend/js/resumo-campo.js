@@ -1,4 +1,5 @@
 import { db } from "../js/db.js";
+import { enviarTurnoParaSheets } from "./sync.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
   const elData = document.querySelector(".data");
@@ -87,10 +88,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     btnFinalizar.addEventListener("click", async () => {
       if (!confirm("Deseja finalizar este turno?")) return;
 
+      await gerarPDF(turno, resumo, registros);
+
       await db.turnos.update(turno.data, {
         finalizadoEm: new Date().toISOString(),
         resumo
       });
+      
+      /*Precisa de correção
+      const turnoAtualizado = await db.turnos.get(turno.data);
+      //Tentar enviar para o sheets
+      const ok = await enviarTurnoParaSheets(turnoAtualizado, registros);
+      */
+
+      if(ok) {
+        alert("Dados enviados para o Google Sheets com sucesso!");
+      } else {
+        alert("Erro ao enviar dados para o Google Sheets.");
+      }
 
       localStorage.removeItem("turnoAtivo");
 
@@ -107,3 +122,39 @@ document.addEventListener("DOMContentLoaded", async () => {
     alert("Erro ao carregar resumo.");
   }
 });
+
+//Geração de pdf funcionando
+async function gerarPDF(turno, resumo, registros) {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF();
+
+  pdf.setFontSize(14);
+  pdf.text("SISAV - Relatório Diário de Campo", 14, 15);
+
+  pdf.setFontSize(10);
+  pdf.text(`Data: ${new Date(turno.data).toLocaleDateString("pt-BR")}`, 14, 25);
+  pdf.text(`Bairro: ${turno.localidade || "Não informado"}`, 14, 32);
+  pdf.text(`Agente: ${turno.agente}`, 14, 39);
+
+  pdf.text("Resumo do Turno", 14, 45);
+
+  pdf.autoTable({
+    startY: 50,
+    head: [["Indicador", "Quantidade"]],
+    body: [
+      ["Imóveis Inspecionados", resumo.inspecionados],
+      ["Focos Encontrados", resumo.focos],
+      ["Imóveis Fechados", resumo.fechados],
+      ["Tratamentos", resumo.tratamentos],
+      ["Depósitos Eliminados", resumo.depositos]
+    ]
+  });
+
+  pdf.text(
+    `Total de registros: ${registros.length}`,
+    14,
+    pdf.lastAutoTable.finalY + 10
+  );
+
+  pdf.save(`SISAV_${turno.data}_${turno.localidade}.pdf`);
+}
