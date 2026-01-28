@@ -38,16 +38,31 @@ document.addEventListener("DOMContentLoaded", async () => {
       .equals(turno.data)
       .toArray();
 
+    //  Buscar recuperações
+    const recuperacao = (await db.recuperacao.toArray())
+      .filter(r => r.data === turno.data)
+
+    console.log("Turno:", turno.data);
+    console.log("Recuperações:", recuperacao);
     // 🔹 Resumo
     const resumo = {
       inspecionados: registros.length,
       focos: 0,
       fechados: 0,
+      recuperados: recuperacao.length,
       tratamentos: 0,
       depositos: 0
     };
 
     registros.forEach(r => {
+
+      // Verificando imoveis fechados
+      const situacao = String(r.tipo_imovel || "").toUpperCase()
+      if(situacao === "R-F" || situacao ==="C-F"){
+        resumo.fechados += 1
+        return
+      }
+
       const a1 = parseInt(r.a1, 10) || 0;
       const a2 = parseInt(r.a2, 10) || 0;
       const b  = parseInt(r.b, 10)  || 0;
@@ -78,6 +93,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         <td>${resumo.inspecionados}</td>
         <td>${resumo.depositos}</td>
         <td>${resumo.tratamentos}</td>
+        <td>${resumo.recuperados}</td>
       </tr>
     `;
 
@@ -95,11 +111,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         resumo
       });
       
-      /*Precisa de correção
+      //Precisa de correção
       const turnoAtualizado = await db.turnos.get(turno.data);
       //Tentar enviar para o sheets
       const ok = await enviarTurnoParaSheets(turnoAtualizado, registros);
-      */
+      
 
       if(ok) {
         alert("Dados enviados para o Google Sheets com sucesso!");
@@ -146,6 +162,7 @@ async function gerarPDF(turno, resumo, registros) {
       ["Focos Encontrados", resumo.focos],
       ["Imóveis Fechados", resumo.fechados],
       ["Tratamentos", resumo.tratamentos],
+      ["Imóveis Recuperados", resumo.recuperados],
       ["Depósitos Eliminados", resumo.depositos]
     ]
   });

@@ -2,9 +2,6 @@ export async function enviarTurnoParaSheets(turno, registros) {
   try {
     const response = await fetch("CHAVE_API_GOOSLE_SHEETS", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
       body: JSON.stringify({ turno, registros })
     });
 
