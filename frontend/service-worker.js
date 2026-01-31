@@ -1,25 +1,26 @@
 const CACHE_NAME = "sisav-v1";
 
 const FILES_TO_CACHE = [
-  "/frontend/html/turno.html",
-  "/frontend/html/ficha-registro.html",
-  "/frontend/html/historico.html",
-  "/frontend/html/ficha-recuperacao.html",
-  "/frontend/html/tabela-recuperacao.html",
-  "/frontend/html/tabela-registros.html",
-  "/frontend/html/resumo_campo.html",
+  "/sisav/",
+  "/sisav/frontend/html/turno.html",
+  "/sisav/frontend/html/ficha-registro.html",
+  "/sisav/frontend/html/historico.html",
+  "/sisav/frontend/html/ficha-recuperacao.html",
+  "/sisav/frontend/html/tabela-recuperacao.html",
+  "/sisav/frontend/html/tabela-registros.html",
+  "/sisav/frontend/html/resumo_campo.html",
 
-  "/frontend/css/style.css",
+  "/sisav/frontend/css/style.css",
 
-  "/frontend/js/db.js",
-  "/frontend/js/historico.js",
-  "/frontend/js/recuperacao.js",
-  "/frontend/js/registros-new.js",
-  "/frontend/js/resumo-campo.js",
-  "/frontend/js/tabela-recuperacao.js",
-  "/frontend/js/turno-guard.js",
-  "/frontend/js/turno.js",
-  "/frontend/js/sync.js",
+  "/sisav/frontend/js/db.js",
+  "/sisav/frontend/js/historico.js",
+  "/sisav/frontend/js/recuperacao.js",
+  "/sisav/frontend/js/registros-new.js",
+  "/sisav/frontend/js/resumo-campo.js",
+  "/sisav/frontend/js/tabela-recuperacao.js",
+  "/sisav/frontend/js/turno-guard.js",
+  "/sisav/frontend/js/turno.js",
+  "/sisav/frontend/js/sync.js",
 ];
 
 self.addEventListener("install", event => {
