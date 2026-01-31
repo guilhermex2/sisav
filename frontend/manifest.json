@@ -1,8 +1,8 @@
 {
   "name": "SISAV - Sistema Antivetorial",
   "short_name": "SISAV",
-  "start_url": "/sisav/html/turno.html",
-  "scope": "/sisav/",
+  "start_url": "/sisav/frontend/html/turno.html",
+  "scope": "/sisav/frontend",
   "display": "standalone",
   "orientation": "landscape",
   "background_color": "#0d6efd",
