@@ -1,38 +1,30 @@
 {
   "name": "SISAV - Sistema Antivetorial",
   "short_name": "SISAV",
-  "start_url": "/sisav/frontend/html/turno.html",
-  "scope": "/sisav/frontend",
+  "start_url": "./html/turno.html",
+  "scope": "../", 
   "display": "standalone",
   "orientation": "landscape",
   "background_color": "#0d6efd",
   "theme_color": "#0d6efd",
   "description": "Sistema de Registro Diário do Serviço Antivetorial",
   "icons": [
-  {
-    "src": "/sisav/frontend/icons/icon-192.png",
-    "sizes": "192x192",
-    "type": "image/png",
-    "purpose": "any"
-  },
-  {
-    "src": "/sisav/frontend/icons/icon-192-maskable.png",
-    "sizes": "192x192",
-    "type": "image/png",
-    "purpose": "maskable"
-  },
-  {
-    "src": "/sisav/frontend/icons/icon-512.png",
-    "sizes": "512x512",
-    "type": "image/png",
-    "purpose": "any"
-  },
-  {
-    "src": "/sisav/frontend/icons/icon-512-maskable.png",
-    "sizes": "512x512",
-    "type": "image/png",
-    "purpose": "maskable"
-  }
-]
-
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }
