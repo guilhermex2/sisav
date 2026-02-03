@@ -193,14 +193,18 @@
     console.log("Turno Diário page loaded.");
   </script>
   <script>
-      if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker
-        .register("/sisav/frontend/service-worker.js")
-        .then(() => console.log("✅ Service Worker do SISAV registrado"))
-        .catch(err => console.error("❌ Falha ao registrar SW:", err));
-    });
-  }
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker
+          .register("/service-worker.js")
+          .then(reg => {
+            console.log("✅ Service Worker registrado");
+            console.log("📍 Escopo:", reg.scope);
+          })
+          .catch(err => console.error("❌ Falha ao registrar SW:", err));
+      });
+    }
   </script>
+
 </body>
 </html>
