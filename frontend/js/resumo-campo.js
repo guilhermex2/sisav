@@ -110,18 +110,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         finalizadoEm: new Date().toISOString(),
         resumo
       });
-      
-      //Precisa de correção
-      const turnoAtualizado = await db.turnos.get(turno.data);
-      //Tentar enviar para o sheets
-      const ok = await enviarTurnoParaSheets(turnoAtualizado, registros);
-      
-
-      if(ok) {
-        alert("Dados enviados para o Google Sheets com sucesso!");
-      } else {
-        alert("Erro ao enviar dados para o Google Sheets.");
-      }
 
       localStorage.removeItem("turnoAtivo");
 
