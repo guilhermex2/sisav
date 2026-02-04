@@ -19,7 +19,8 @@ const FILES_TO_CACHE = [
   "./frontend/js/turno.js",
   "./frontend/js/sync.js",
   "./frontend/manifest.json", 
-  "./frontend/icons/icon-192-maskable.png" 
+  "./frontend/icons/icon-192.png", 
+  "./frontend/icons/icon-512.png" 
 ]
 
 self.addEventListener("install", event => {
