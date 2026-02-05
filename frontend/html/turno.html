@@ -103,6 +103,9 @@
     <a href="ficha-recuperacao.html">📂 Recuperação</a>
     <a href="tabela-recuperacao.html">📂 Tabela Registros Recuperação</a>
     <a href="resumo_campo.html">📊 Resumo</a>
+    <button id="btnInstalar" style="display: none; background: #28a745; color: white; border: none; padding: 10px; margin: 10px; border-radius: 8px; cursor: pointer;">
+      📲 Instalar App
+    </button>
     <a href="#" class="logout">🚪 Sair</a>
   </nav>
 
@@ -193,17 +196,51 @@
     console.log("Turno Diário page loaded.");
   </script>
   <script>
+    let deferredPrompt;
+    const btnInstalar = document.getElementById('btnInstalar');
+
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
         navigator.serviceWorker
           .register("../../service-worker.js", { scope: '../../' })
           .then(reg => {
             console.log("✅ Service Worker registrado");
-            console.log("📍 Escopo:", reg.scope);
           })
           .catch(err => console.error("❌ Falha ao registrar SW:", err));
       });
     }
+
+    // Captura o evento de instalação do Chrome
+    window.addEventListener('beforeinstallprompt', (e) => {
+      console.log("✅ O sistema está pronto para ser instalado!");
+      // Previne o banner automático (opcional)
+      e.preventDefault();
+      // Guarda o evento para usar depois
+      deferredPrompt = e;
+      // Mostra o botão no menu lateral
+      btnInstalar.style.display = 'block';
+    });
+
+    // Ação ao clicar no botão de instalar
+    btnInstalar.addEventListener('click', async () => {
+      if (deferredPrompt) {
+        // Mostra o prompt de instalação
+        deferredPrompt.prompt();
+        // Espera a resposta do usuário
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`Usuário respondeu à instalação: ${outcome}`);
+        // Limpa o prompt para não ser usado de novo
+        deferredPrompt = null;
+        // Esconde o botão após a escolha
+        btnInstalar.style.display = 'none';
+      }
+    });
+
+    // Esconde o botão se o app já estiver instalado
+    window.addEventListener('appinstalled', () => {
+      console.log('🎉 PWA instalado com sucesso!');
+      btnInstalar.style.display = 'none';
+    });
   </script>
 
 </body>
