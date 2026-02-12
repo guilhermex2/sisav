@@ -1,3 +1,5 @@
+
+/*
 import { Request, Response } from 'express';
 import { prisma } from '../libs/prisma';
 
@@ -32,7 +34,7 @@ export const buscarTurnoPorData = async (req: Request, res: Response) => {
   try {
     const turno = await prisma.turno.findFirst({
       where: {
-        data: new Date(data),
+        data: new Date(),
       }
     });
 
@@ -43,3 +45,4 @@ export const buscarTurnoPorData = async (req: Request, res: Response) => {
     return res.status(500).json({ message: 'Erro ao buscar turno' });
   }
 };
+*/

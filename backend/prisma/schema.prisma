@@ -14,57 +14,67 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Usuario {
-  id      String   @id @default(uuid())
-  nome    String @unique
-  turnos  Turno[]
+model Agente {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  createdAt DateTime @default(now())
+
+  turnos    Turno[]
 }
 
 model Turno {
-  id                    String     @id @default(uuid())
-  data                  DateTime
-  municipio             String
-  ciclo                 Int
-  localidade            String
-  categoria_localidade  String
-  zona                  String
-  atividade             String
-  concluida             Boolean @default(false)
-  usuarioId             String
-  usuario               Usuario    @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  registros             Registro[]
-  criadoEm              DateTime   @default(now())
+  id                  Int      @id @default(autoincrement())
+  data                DateTime
+  municipio            String
+  ciclo                String
+  localidade           String
+  categoriaLocalidade  String?
+  zona                 String?
+  atividade             String?
+
+  agenteId             Int
+  agente               Agente   @relation(fields: [agenteId], references: [id])
+
+  createdAt            DateTime @default(now())
+  registros            Registro[]
 }
 
 model Registro {
-  id                   String   @id @default(uuid())
-  turnoId              String
-  turno                Turno    @relation(fields: [turnoId], references: [id], onDelete: Cascade)
-  quarteirao           String   
-  sequencia            String   
-  lado                 String   
-  logradouro           String   
-  numero               String   
-  sequencia2           String   
-  complemento          String   
-  tipo_imovel          String   
-  horario_entrada      String   
-  a1                   Int      
-  a2                   Int      
-  b                    Int      
-  c                    Int      
-  d1                   Int      
-  d2                   Int      
-  e                    Int      
-  depositos_eliminados Int      
-  insp_l1              Int      
-  amostra_inicial      Int      
-  amostra_final        Int      
-  qtd_tubitos          Int      
-  im_trat              Int      
-  queda_gramas         Int      
-  qtd_dep_trat         Int      
-  informacao           String   
-  data                 DateTime 
-  atividade            String   
+  id                  Int      @id @default(autoincrement())
+
+  turnoId             Int
+  turno               Turno    @relation(fields: [turnoId], references: [id])
+
+  quarteirao           String?
+  sequencia            String?
+  sequencia2           String?
+  lado                 String?
+  tipoImovel           String?
+
+  logradouro           String?
+  numero               String?
+  complemento          String?
+
+  horarioEntrada       DateTime?
+  informacao           String?
+
+  a1                   Int?
+  a2                   Int?
+  b                    Int?
+  c                    Int?
+  d1                   Int?
+  d2                   Int?
+  e                    Int?
+
+  inspL1               Boolean?
+  imTrat               Boolean?
+
+  amostraInicial       Int?
+  amostraFinal         Int?
+  qtdDepTrat           Int?
+  depositosEliminados  Int?
+  qtdTubitos           Int?
+  quedaGramas          Int?
+
+  criadoEm             DateTime @default(now())
 }
