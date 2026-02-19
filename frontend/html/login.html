@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SISAV - Login</title>
+
+  <link rel="manifest" href="../manifest.json">
+  <meta name="theme-color" content="#0d6efd">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      background: linear-gradient(135deg, #0d6efd, #0b5ed7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-container {
+      background: #fff;
+      padding: 2rem;
+      width: 100%;
+      max-width: 380px;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    .login-container h1 {
+      text-align: center;
+      margin-bottom: 0.5rem;
+      color: #0d6efd;
+    }
+
+    .login-container p {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #555;
+      font-size: 0.9rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.4rem;
+      font-weight: bold;
+      color: #333;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.6rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #0d6efd;
+    }
+
+    button {
+      width: 100%;
+      padding: 0.7rem;
+      background: #0d6efd;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0b5ed7;
+    }
+
+    .error {
+      color: #dc3545;
+      text-align: center;
+      margin-top: 0.8rem;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.8rem;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-container">
+    <h1>SISAV</h1>
+    <p>Sistema Antivetorial</p>
+
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="email">Agente</label>
+        <input type="text" id="agente" required />
+      </div>
+
+      <div class="form-group">
+        <label for="senha">Senha</label>
+        <input type="password" id="senha" required />
+      </div>
+
+      <button type="submit">Entrar</button>
+    </form>
+
+    <div class="error" id="errorMsg">
+      E-mail ou senha inválidos
+    </div>
+
+    <div class="footer">
+      © 2026 - SISAV
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById("loginForm");
+    const errorMsg = document.getElementById("errorMsg");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errorMsg.style.display = "none";
+
+      const nome = document.getElementById("agente").value;
+      const senha = document.getElementById("senha").value;
+
+      if (!nome || !senha) {
+        errorMsg.textContent = "Preencha todos os campos.";
+        errorMsg.style.display = "block";
+        return;
+      }
+
+      try {
+        // 🔗 FUTURA INTEGRAÇÃO COM BACKEND
+        const response = await fetch("http://localhost:4000/sync/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ nome, senha })
+        });
+
+        if (!response.ok) {
+          throw new Error("Login inválido");
+        }
+
+        const data = await response.json();
+
+        // salvar token
+        localStorage.setItem("token", data.token);
+
+        // Redirecionar para o sistema
+        window.location.href = "turno.html";
+
+      } catch (error) {
+        errorMsg.textContent = "E-mail ou senha inválidos.";
+        errorMsg.style.display = "block";
+      }
+    });
+  </script>
+
+</body>
+</html>

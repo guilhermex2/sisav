@@ -1,14 +1,17 @@
 // src/controllers/sync.controller.ts
 import { prisma } from "../libs/prisma";
-import { Request, Response } from "express"
+import { Request, Response } from "express";
 
-
-/*
-Função para salvar turno no DB...
-Essa funão já funciona, fazendo referencia ao agente pelo agente id...
-Precisa ser ajustada para buscar o agenteId de uma forma melhor
-*/
 export async function syncTurno(req: Request, res: Response) {
+
+  // agenteId e nome vêm do token, não do body
+  const agenteId = req.agente?.agenteId;
+  const nomeAgente = req.agente?.nome;
+
+  if (!agenteId || !nomeAgente) {
+    return res.status(401).json({ erro: "Agente não autenticado" });
+  }
+
   const {
     data,
     municipio,
@@ -17,23 +20,22 @@ export async function syncTurno(req: Request, res: Response) {
     categoria_localidade,
     zona,
     atividade,
-    agenteId
+    agente
   } = req.body;
 
   try {
     const turno = await prisma.turno.create({
       data: {
         data: new Date(data),
-        municipio: municipio,
-        ciclo: ciclo,
-        localidade: localidade,
+        municipio,
+        ciclo,
+        localidade,
         categoriaLocalidade: categoria_localidade,
-        zona: zona,
-        atividade: atividade,
+        zona,
+        atividade,
+        nomeAgente: agente,        // snapshot do nome para relatórios
         agente: {
-          connect: {
-            id: agenteId
-          }
+          connect: { id: agenteId }
         }
       }
     });
@@ -45,12 +47,11 @@ export async function syncTurno(req: Request, res: Response) {
   }
 }
 
-//Função de buscar agente utiizada para testes
-export const buscarAgente = async(req: Request, res: Response) => {
+export const buscarAgente = async (req: Request, res: Response) => {
   try {
-    const agente = await prisma.agente.findMany()
-    res.status(200).json(agente)
+    const agentes = await prisma.agente.findMany();
+    res.status(200).json(agentes);
   } catch (error) {
-    res.status(400).json("erro: erro ao buscar agente")
+    res.status(400).json({ erro: "Erro ao buscar agente" });
   }
-}
+};

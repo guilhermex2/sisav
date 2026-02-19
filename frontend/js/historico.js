@@ -1,6 +1,6 @@
 import { db } from "./db.js";
 
-const LIMITE_DIAS = 1; // 🔥 ajuste aqui (ex: 30, 60, 90)
+const LIMITE_DIAS = 1; //  ajuste aqui (ex: 30, 60, 90)
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-// 🔥 Limpa turnos antigos + registros associados
+//  Limpa turnos antigos + registros associados
 async function limparHistoricoAntigo() {
   const dataLimite = new Date();
   dataLimite.setDate(dataLimite.getDate() - LIMITE_DIAS);
@@ -31,7 +31,7 @@ async function limparHistoricoAntigo() {
   }
 }
 
-// 📊 Carrega histórico
+//  Carrega histórico
 async function carregarHistorico() {
   const lista = document.getElementById("listaTurnos");
   const semDados = document.getElementById("semDados");
