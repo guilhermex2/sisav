@@ -110,7 +110,7 @@ export async function finalizarTurno(
   }
 
   try {
-    const resultado = await prisma.$transaction(async (tx) => {
+    const resultado = await prisma.$transaction(async (tx: typeof prisma) => {
 
       // 1️⃣ Criar o turno
       const turnoSalvo = await tx.turno.create({

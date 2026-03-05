@@ -1,6 +1,6 @@
 /*Cria uma instância do PrismaClient e a exporta para ser usada em outros lugares.
 A verificação de globalThis é para evitar que o PrismaClient seja instanciado várias vezes.*/
-import { PrismaClient } from '../generated/prisma'
+import { PrismaClient } from '@prisma/client'
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient }
 
