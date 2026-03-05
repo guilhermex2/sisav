@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -17,48 +11,65 @@ datasource db {
 model Agente {
   id        Int      @id @default(autoincrement())
   nome      String   @unique
-  password  String   @unique
+  password  String
   createdAt DateTime @default(now())
 
   turnos    Turno[]
+  visitas   Visita[]
 }
 
 model Turno {
-  id                  Int      @id @default(autoincrement())
-  data                DateTime
+  id                   Int      @id @default(autoincrement())
+  data                 DateTime
   municipio            String
   ciclo                String
   localidade           String
   categoriaLocalidade  String?
   zona                 String?
-  atividade             String?
+  atividade            String?
 
   agenteId             Int
   agente               Agente   @relation(fields: [agenteId], references: [id])
-  nomeAgente           String
 
+  nomeAgente           String
+  
   createdAt            DateTime @default(now())
-  registros            Registro[]
+
+  visitas              Visita[]
 }
 
-model Registro {
-  id                  Int      @id @default(autoincrement())
+model Imovel {
+  id          Int     @id @default(autoincrement())
+  
+  codigo      String  @unique   // identificador único do imóvel
+  municipio   String?
+  localidade  String?
+  quarteirao  String?
+  logradouro  String?
+  numero      String?
+  complemento String?
 
-  turnoId             Int
-  turno               Turno    @relation(fields: [turnoId], references: [id])
+  createdAt   DateTime @default(now())
 
-  quarteirao           String?
-  sequencia            String?
-  sequencia2           String?
-  lado                 String?
-  tipoImovel           String?
+  visitas     Visita[]
+}
 
-  logradouro           String?
-  numero               String?
-  complemento          String?
+model Visita {
+  id            Int      @id @default(autoincrement())
 
-  horarioEntrada       DateTime?
-  informacao           String?
+  turnoId       Int
+  turno         Turno    @relation(fields: [turnoId], references: [id])
+
+  agenteId      Int
+  agente        Agente   @relation(fields: [agenteId], references: [id])
+
+  imovelId      Int
+  imovel        Imovel   @relation(fields: [imovelId], references: [id])
+
+  tipoVisita    TipoVisita
+
+  horarioEntrada DateTime?
+  informacao     String?
 
   a1                   Int?
   a2                   Int?
@@ -78,5 +89,12 @@ model Registro {
   qtdTubitos           Int?
   quedaGramas          Int?
 
-  criadoEm             DateTime @default(now())
+  criadoEm       DateTime @default(now())
+}
+
+enum TipoVisita {
+  NORMAL
+  R_F
+  C_F
+  RECUPERACAO
 }

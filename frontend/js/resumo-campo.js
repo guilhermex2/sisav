@@ -1,16 +1,90 @@
 import { db } from "../js/db.js";
-import { enviarTurnoParaSheets } from "./sync.js";
 
+// ⚙️ Configure aqui quando sua API estiver pronta
+const API_BASE_URL = "http://localhost:4000";
+
+// ==============================================================
+// 📡 Função de envio para a API REST
+// ==============================================================
+async function enviarParaAPI(turno, registros) {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    throw new Error("Token de autenticação não encontrado. Faça login novamente.");
+  }
+
+  // ✅ CORRIGIDO: lê nomeAgente e agenteId salvos no turno
+  // com fallback para o campo "agente" legado
+  const payload = {
+    turno: {
+      data:                turno.data,
+      municipio:           turno.municipio,
+      ciclo:               turno.ciclo,
+      localidade:          turno.localidade,
+      categoriaLocalidade: turno.categoria_localidade ?? null,
+      zona:                turno.zona                 ?? null,
+      atividade:           turno.atividade            ?? null,
+      agenteId:   parseInt(turno.agenteId, 10)  || turno.agente, // ✅ fallback para turnos antigos
+      nomeAgente:          turno.nomeAgente || turno.agente, // ✅ fallback para turnos antigos
+    },  
+    registros: registros.map(r => ({
+      quarteirao:          r.quarteirao          ?? null,
+      sequencia:           r.sequencia           ?? null,
+      sequencia2:          r.sequencia2          ?? null,
+      lado:                r.lado                ?? null,
+      tipoImovel:          r.tipo_imovel         ?? null,
+      logradouro:          r.logradouro          ?? null,
+      numero:              r.numero              ?? null,
+      complemento:         r.complemento         ?? null,
+      horarioEntrada:      r.horario_entrada      ?? null,
+      informacao:          r.informacao          ?? null,
+      a1:                  r.a1                  ?? null,
+      a2:                  r.a2                  ?? null,
+      b:                   r.b                   ?? null,
+      c:                   r.c                   ?? null,
+      d1:                  r.d1                  ?? null,
+      d2:                  r.d2                  ?? null,
+      e:                   r.e                   ?? null,
+      inspL1:              r.insp_l1             ?? null,
+      imTrat:              r.im_trat             ?? null,
+      amostraInicial:      r.amostra_inicial     ?? null,
+      amostraFinal:        r.amostra_final       ?? null,
+      qtdDepTrat:          r.qtd_dep_trat        ?? null,
+      depositosEliminados: r.depositos_eliminados ?? null,
+      qtdTubitos:          r.qtd_tubitos         ?? null,
+      quedaGramas:         r.queda_gramas        ?? null,
+    })),
+  };
+
+  const response = await fetch(`${API_BASE_URL}/api/turnos/finalizar`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const erro = await response.json().catch(() => ({}));
+    throw new Error(erro.message || `Erro na API: ${response.status}`);
+  }
+
+  return await response.json();
+}
+
+// ==============================================================
+// 🖥️ Inicialização da página
+// ==============================================================
 document.addEventListener("DOMContentLoaded", async () => {
-  const elData = document.querySelector(".data");
-  const elBairro = document.querySelector(".bairro");
+  const elData      = document.querySelector(".data");
+  const elBairro    = document.querySelector(".bairro");
   const indicadores = document.querySelectorAll(".indicator");
-  const tbody = document.querySelector("tbody");
+  const tbody       = document.querySelector("tbody");
   const btnFinalizar = document.querySelector(".btn-success");
-  const badge = document.querySelector(".badge");
+  const badge       = document.querySelector(".badge");
 
   try {
-    // 🔑 Buscar turno ativo explícito
     const dataTurnoAtivo = localStorage.getItem("turnoAtivo");
 
     if (!dataTurnoAtivo) {
@@ -19,7 +93,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    const turno = await db.turnos.get(dataTurnoAtivo);
+    const [data, agenteId] = dataTurnoAtivo.split("_")
+    const turno = await db.turnos.get({data, agenteId})
 
     if (!turno || turno.finalizadoEm) {
       alert("Este turno já foi finalizado.");
@@ -28,60 +103,40 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    // 🔹 Dados do turno
-    elData.textContent = new Date(turno.data).toLocaleDateString("pt-BR");
+    elData.textContent   = new Date(turno.data).toLocaleDateString("pt-BR");
     elBairro.textContent = turno.localidade || "Não informado";
 
-    // 🔹 Buscar registros do turno
     const registros = await db.registros
       .where("data_turno")
       .equals(turno.data)
       .toArray();
 
-    //  Buscar recuperações
-    const recuperacao = (await db.recuperacao.toArray())
-      .filter(r => r.data === turno.data)
+    const recuperacoes = (await db.recuperacao.toArray())
+      .filter(r => r.data?.slice(0, 10) === turno.data?.slice(0, 10));
 
-    console.log("Turno:", turno.data);
-    console.log("Recuperações:", recuperacao);
-    // 🔹 Resumo
+    // 🔹 Calcular resumo
     const resumo = {
       inspecionados: registros.length,
-      focos: 0,
-      fechados: 0,
-      recuperados: recuperacao.length,
-      tratamentos: 0,
-      depositos: 0
+      focos:         0,
+      fechados:      0,
+      recuperados:   recuperacoes.length,
+      tratamentos:   0,
+      depositos:     0,
     };
 
     registros.forEach(r => {
-
-      // Verificando imoveis fechados
-      const situacao = String(r.tipo_imovel || "").toUpperCase()
-      if(situacao === "R-F" || situacao ==="C-F"){
-        resumo.fechados += 1
-        return
+      const situacao = String(r.tipo_imovel || "").toUpperCase();
+      if (situacao === "R-F" || situacao === "C-F") {
+        resumo.fechados += 1;
+        return;
       }
-
-      const a1 = parseInt(r.a1, 10) || 0;
-      const a2 = parseInt(r.a2, 10) || 0;
-      const b  = parseInt(r.b, 10)  || 0;
-      const c  = parseInt(r.c, 10)  || 0;
-      const d1 = parseInt(r.d1, 10) || 0;
-      const d2 = parseInt(r.d2, 10) || 0;
-      const e  = parseInt(r.e, 10)  || 0;
-
-      resumo.fechados += c;
-      resumo.focos += (a1 + a2 + b + d1 + d2 + e);
-
-      if (String(r.im_trat).toUpperCase() === "X") {
-        resumo.tratamentos += 1;
-      }
-
+      resumo.focos += (parseInt(r.a1)||0) + (parseInt(r.a2)||0) + (parseInt(r.b)||0)
+                    + (parseInt(r.d1)||0) + (parseInt(r.d2)||0) + (parseInt(r.e)||0);
+      resumo.fechados  += parseInt(r.c, 10) || 0;
+      if (r.im_trat === true || String(r.im_trat).toUpperCase() === "X") resumo.tratamentos += 1;
       resumo.depositos += parseInt(r.depositos_eliminados, 10) || 0;
     });
 
-    // 🔹 UI
     indicadores[0].textContent = resumo.inspecionados;
     indicadores[1].textContent = resumo.focos;
     indicadores[2].textContent = resumo.fechados;
@@ -98,27 +153,60 @@ document.addEventListener("DOMContentLoaded", async () => {
     `;
 
     badge.textContent = "EM ANDAMENTO";
-    badge.className = "badge bg-warning text-dark px-3 py-2";
+    badge.className   = "badge bg-warning text-dark px-3 py-2";
 
+    // ==============================================================
     // 🔒 Finalizar turno
+    // ==============================================================
     btnFinalizar.addEventListener("click", async () => {
       if (!confirm("Deseja finalizar este turno?")) return;
 
-      await gerarPDF(turno, resumo, registros);
+      btnFinalizar.disabled    = true;
+      btnFinalizar.textContent = "Finalizando...";
 
-      await db.turnos.update(turno.data, {
-        finalizadoEm: new Date().toISOString(),
-        resumo
-      });
+      try {
+        // 1️⃣ Marca como finalizado no IndexedDB
+        const finalizadoEm = new Date().toISOString();
+        await db.turnos.update({data: turno.data , agenteId: turno.agenteId}, {finalizadoEm, resumo});
+        turno.finalizadoEm = finalizadoEm;
 
-      localStorage.removeItem("turnoAtivo");
+        // 2️⃣ Envia para a API
+        try {
+          await enviarParaAPI(turno, registros);
 
-      badge.textContent = "FINALIZADO";
-      badge.className = "badge bg-success px-3 py-2";
-      btnFinalizar.disabled = true;
+          // ✅ Marca como sincronizado no IndexedDB
+          const sincronizadoEm = new Date().toISOString();
+          await db.turnos.update(
+            { data: turno.data, agenteId: turno.agenteId },
+            { sincronizadoEm }
+          );
 
-      alert("Turno finalizado com sucesso!");
-      window.location.href = "turno.html";
+          console.log("✅ Dados enviados para a API com sucesso.");
+        } catch (erroAPI) {
+          console.error("⚠️ Erro ao enviar para API:", erroAPI);
+          alert(
+            `Turno finalizado localmente, mas houve um erro ao sincronizar:\n\n${erroAPI.message}\n\nOs dados estão salvos no dispositivo.`
+          );
+        }
+
+        // 3️⃣ Gera o PDF
+        await gerarPDF(turno, resumo, registros);
+
+        // 4️⃣ Limpa turno ativo
+        localStorage.removeItem("turnoAtivo");
+
+        badge.textContent = "FINALIZADO";
+        badge.className   = "badge bg-success px-3 py-2";
+
+        alert("Turno finalizado com sucesso!");
+        window.location.href = "turno.html";
+
+      } catch (err) {
+        console.error("Erro ao finalizar turno:", err);
+        alert("Erro ao finalizar turno. Tente novamente.");
+        btnFinalizar.disabled    = false;
+        btnFinalizar.textContent = "Finalizar";
+      }
     });
 
   } catch (err) {
@@ -127,7 +215,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-//Geração de pdf funcionando
+// ==============================================================
+// 📄 Geração de PDF
+// ==============================================================
 async function gerarPDF(turno, resumo, registros) {
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF();
@@ -137,22 +227,22 @@ async function gerarPDF(turno, resumo, registros) {
 
   pdf.setFontSize(10);
   pdf.text(`Data: ${new Date(turno.data).toLocaleDateString("pt-BR")}`, 14, 25);
-  pdf.text(`Bairro: ${turno.localidade || "Não informado"}`, 14, 32);
-  pdf.text(`Agente: ${turno.agente}`, 14, 39);
-
-  pdf.text("Resumo do Turno", 14, 45);
+  pdf.text(`Município: ${turno.municipio || "Não informado"}`, 14, 32);
+  pdf.text(`Localidade: ${turno.localidade || "Não informado"}`, 14, 39);
+  pdf.text(`Agente: ${turno.nomeAgente || turno.agente}`, 14, 46); // ✅ usa nomeAgente com fallback
+  pdf.text("Resumo do Turno", 14, 52);
 
   pdf.autoTable({
-    startY: 50,
+    startY: 57,
     head: [["Indicador", "Quantidade"]],
     body: [
       ["Imóveis Inspecionados", resumo.inspecionados],
-      ["Focos Encontrados", resumo.focos],
-      ["Imóveis Fechados", resumo.fechados],
-      ["Tratamentos", resumo.tratamentos],
-      ["Imóveis Recuperados", resumo.recuperados],
-      ["Depósitos Eliminados", resumo.depositos]
-    ]
+      ["Focos Encontrados",     resumo.focos],
+      ["Imóveis Fechados",      resumo.fechados],
+      ["Tratamentos",           resumo.tratamentos],
+      ["Imóveis Recuperados",   resumo.recuperados],
+      ["Depósitos Eliminados",  resumo.depositos],
+    ],
   });
 
   pdf.text(

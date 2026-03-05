@@ -166,6 +166,9 @@
         // salvar token
         localStorage.setItem("token", data.token);
 
+        const payload = JSON.parse(atob(data.token.split(".")[1]));
+        localStorage.setItem("agenteId", parseInt(payload.agenteId));
+        localStorage.setItem("nomeAgente", payload.nome);
         // Redirecionar para o sistema
         window.location.href = "turno.html";
 

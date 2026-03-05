@@ -49,7 +49,12 @@ export async function syncTurno(req: Request, res: Response) {
 
 export const buscarAgente = async (req: Request, res: Response) => {
   try {
-    const agentes = await prisma.agente.findMany();
+    const agentes = await prisma.agente.findMany({
+      include:{
+        turnos: true
+        
+      }
+    });
     res.status(200).json(agentes);
   } catch (error) {
     res.status(400).json({ erro: "Erro ao buscar agente" });

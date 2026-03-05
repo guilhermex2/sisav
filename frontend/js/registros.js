@@ -3,15 +3,20 @@ import { db } from "./db.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
 
-  const dataTurnoAtivo = localStorage.getItem("turnoAtivo");
+  const turnoAtivoKey = localStorage.getItem("turnoAtivo");
+  const agenteId = localStorage.getItem("agenteId");
 
-  if (!dataTurnoAtivo) {
+  if (!turnoAtivoKey) {
     alert("Não há turno ativo para registrar imóveis.");
     window.location.href = "turno.html";
     return;
   }
 
-  const turnoAtivo = await db.turnos.get(dataTurnoAtivo);
+  // ✅ Extrai a data da chave "2025-01-10_agenteId123"
+  const data = turnoAtivoKey.split("_")[0];
+
+  // ✅ Busca com chave composta
+  const turnoAtivo = await db.turnos.get({ data, agenteId });
 
   if (!turnoAtivo || turnoAtivo.finalizadoEm) {
     alert("Este turno já foi finalizado.");
@@ -29,7 +34,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     await db.registros.add({
       ...dados,
-      data_turno: turnoAtivo.data, // 🔑 vínculo lógico
+      data_turno: turnoAtivo.data,
       criado_em: new Date().toISOString()
     });
 

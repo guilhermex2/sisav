@@ -1,6 +1,7 @@
 const CACHE_NAME = "sisav-v1";
 
 const FILES_TO_CACHE = [
+  "./frontend/html/login.html",
   "./frontend/html/turno.html",
   "./frontend/html/ficha-registro.html",
   "./frontend/html/historico.html",
