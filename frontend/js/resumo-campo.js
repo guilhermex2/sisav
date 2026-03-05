@@ -1,7 +1,7 @@
 import { db } from "../js/db.js";
 
 // ⚙️ Configure aqui quando sua API estiver pronta
-const API_BASE_URL = "http://localhost:4000";
+const API_BASE_URL = "https://sisav-api.onrender.com";
 
 // ==============================================================
 // 📡 Função de envio para a API REST

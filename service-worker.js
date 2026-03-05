@@ -73,7 +73,7 @@ self.addEventListener("fetch", event => {
     }).catch(() => {
       // 3️⃣ Offline total → fallback
       if (event.request.mode === "navigate") {
-        return caches.match("./frontend/html/turno.html");
+        return caches.match("./frontend/html/login.html");
       }
     })
   );

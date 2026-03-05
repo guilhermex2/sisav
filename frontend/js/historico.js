@@ -1,7 +1,7 @@
 import { db } from "./db.js";
 
 const LIMITE_DIAS = 1;
-const API_BASE_URL = "http://localhost:4000";
+const API_BASE_URL = "https://sisav-api.onrender.com";
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
