@@ -4,6 +4,7 @@
 // =================================================================
 import { Request, Response } from "express";
 import { prisma } from "../libs/prisma";
+import { Prisma } from "../generated/prisma";
 
 // -----------------------------------------------------------------
 // 📦 Tipos do payload (espelham o schema Prisma)
