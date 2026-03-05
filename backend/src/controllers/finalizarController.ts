@@ -4,7 +4,13 @@
 // =================================================================
 import { Request, Response } from "express";
 import { prisma } from "../libs/prisma";
-import { Prisma } from "../generated/prisma";
+import { PrismaClient } from "@prisma/client";
+
+// Tipo correto para o cliente de transação do Prisma
+type TransactionClient = Omit<
+  PrismaClient,
+  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
+>;
 
 // -----------------------------------------------------------------
 // 📦 Tipos do payload (espelham o schema Prisma)
@@ -110,87 +116,86 @@ export async function finalizarTurno(
   }
 
   try {
-    const resultado = await prisma.$transaction(async (tx: typeof prisma) => {
+    const resultado = await prisma.$transaction(async (tx: TransactionClient) => {
 
       // 1️⃣ Criar o turno
       const turnoSalvo = await tx.turno.create({
         data: {
-          data:               new Date(turno.data),
-          municipio:          turno.municipio,
-          ciclo:              turno.ciclo,
-          localidade:         turno.localidade,
+          data:                new Date(turno.data),
+          municipio:           turno.municipio,
+          ciclo:               turno.ciclo,
+          localidade:          turno.localidade,
           categoriaLocalidade: turno.categoriaLocalidade ?? null,
-          zona:               turno.zona                ?? null,
-          atividade:          turno.atividade           ?? null,
-          agenteId:           Number(turno.agenteId),
-          nomeAgente:         turno.nomeAgente,
+          zona:                turno.zona                ?? null,
+          atividade:           turno.atividade           ?? null,
+          agenteId:            Number(turno.agenteId),
+          nomeAgente:          turno.nomeAgente,
         },
       });
 
-      // 2️⃣ Criar os registros vinculados ao turno
       // 2️⃣ Criar visitas vinculadas ao turno
-    for (const r of registros) {
+      for (const r of registros) {
 
-      // 🔹 1. Definir um código único do imóvel
-      const codigoImovel = `${r.quarteirao ?? ""}-${r.numero ?? ""}-${r.logradouro ?? ""}`.trim();
+        // 🔹 1. Definir um código único do imóvel
+        const codigoImovel = `${r.quarteirao ?? ""}-${r.numero ?? ""}-${r.logradouro ?? ""}`.trim();
 
-      // 🔹 2. Criar ou buscar imóvel
-      const imovel = await tx.imovel.upsert({
-        where: { codigo: codigoImovel },
-        update: {},
-        create: {
-          codigo: codigoImovel,
-          municipio: turno.municipio,
-          localidade: turno.localidade,
-          quarteirao: r.quarteirao ?? null,
-          logradouro: r.logradouro ?? null,
-          numero: r.numero ?? null,
-          complemento: r.complemento ?? null,
-        },
-      });
+        // 🔹 2. Criar ou buscar imóvel
+        const imovel = await tx.imovel.upsert({
+          where: { codigo: codigoImovel },
+          update: {},
+          create: {
+            codigo:      codigoImovel,
+            municipio:   turno.municipio,
+            localidade:  turno.localidade,
+            quarteirao:  r.quarteirao  ?? null,
+            logradouro:  r.logradouro  ?? null,
+            numero:      r.numero      ?? null,
+            complemento: r.complemento ?? null,
+          },
+        });
 
-      // 🔹 3. Criar visita
-      await tx.visita.create({
-        data: {
-          turnoId: turnoSalvo.id,
-          agenteId: Number(turno.agenteId),
-          imovelId: imovel.id,
+        // 🔹 3. Criar visita
+        await tx.visita.create({
+          data: {
+            turnoId:  turnoSalvo.id,
+            agenteId: Number(turno.agenteId),
+            imovelId: imovel.id,
 
-          tipoVisita: definirTipoVisita(r), // função que vamos criar
+            tipoVisita: definirTipoVisita(r),
 
-          horarioEntrada: r.horarioEntrada
-            ? new Date(`${turno.data.split("T")[0]}T${r.horarioEntrada}:00`)
-            : null,
+            horarioEntrada: r.horarioEntrada
+              ? new Date(`${turno.data.split("T")[0]}T${r.horarioEntrada}:00`)
+              : null,
 
-          informacao: r.informacao ?? null,
+            informacao: r.informacao ?? null,
 
-          a1: toInt(r.a1),
-          a2: toInt(r.a2),
-          b: toInt(r.b),
-          c: toInt(r.c),
-          d1: toInt(r.d1),
-          d2: toInt(r.d2),
-          e: toInt(r.e),
+            a1: toInt(r.a1),
+            a2: toInt(r.a2),
+            b:  toInt(r.b),
+            c:  toInt(r.c),
+            d1: toInt(r.d1),
+            d2: toInt(r.d2),
+            e:  toInt(r.e),
 
-          inspL1: toBool(r.inspL1),
-          imTrat: toBool(r.imTrat),
+            inspL1: toBool(r.inspL1),
+            imTrat: toBool(r.imTrat),
 
-          amostraInicial: toInt(r.amostraInicial),
-          amostraFinal: toInt(r.amostraFinal),
-          qtdDepTrat: toInt(r.qtdDepTrat),
-          depositosEliminados: toInt(r.depositosEliminados),
-          qtdTubitos: toInt(r.qtdTubitos),
-          quedaGramas: toInt(r.quedaGramas),
-        },
-      });
-    }
+            amostraInicial:      toInt(r.amostraInicial),
+            amostraFinal:        toInt(r.amostraFinal),
+            qtdDepTrat:          toInt(r.qtdDepTrat),
+            depositosEliminados: toInt(r.depositosEliminados),
+            qtdTubitos:          toInt(r.qtdTubitos),
+            quedaGramas:         toInt(r.quedaGramas),
+          },
+        });
+      }
 
       return turnoSalvo;
     });
 
     return res.status(201).json({
-      message:  "Turno finalizado e sincronizado com sucesso.",
-      turnoId:  resultado.id,
+      message:        "Turno finalizado e sincronizado com sucesso.",
+      turnoId:        resultado.id,
       totalRegistros: registros.length,
     });
 
