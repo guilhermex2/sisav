@@ -1,8 +1,8 @@
 {
   "name": "SISAV - Sistema Antivetorial",
   "short_name": "SISAV",
-  "start_url": "./html/login.html",
-  "scope": "../", 
+  "start_url": "./frontend/html/login.html",
+  "scope": "./", 
   "display": "standalone",
   "orientation": "landscape",
   "background_color": "#0d6efd",

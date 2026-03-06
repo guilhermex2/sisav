@@ -19,7 +19,7 @@ const FILES_TO_CACHE = [
   "./frontend/js/turno-guard.js",
   "./frontend/js/turno.js",
   "./frontend/js/sync.js",
-  "./frontend/manifest.json", 
+  "./manifest.json", 
   "./frontend/icons/icon-192.png", 
   "./frontend/icons/icon-512.png" 
 ]
@@ -73,7 +73,7 @@ self.addEventListener("fetch", event => {
     }).catch(() => {
       // 3️⃣ Offline total → fallback
       if (event.request.mode === "navigate") {
-        return caches.match("./frontend/html/login.html");
+        return caches.match("/sisav/frontend/html/login.html");
       }
     })
   );
