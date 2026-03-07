@@ -130,6 +130,10 @@
   </div>
 
   <script>
+    const agenteLogado = localStorage.getItem("token")
+    if(agenteLogado){
+      window.location.href = 'turno.html'
+    }
     const form = document.getElementById("loginForm");
     const errorMsg = document.getElementById("errorMsg");
 

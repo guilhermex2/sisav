@@ -2,6 +2,10 @@
 import { db } from "./db.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
+  const turnoLogado = localStorage.getItem("turnoAtivo")
+  if(turnoLogado){
+    window.location.href = 'ficha-registro.html'
+  }
   const hoje = new Date().toISOString().split("T")[0];
   const agenteId = localStorage.getItem("agenteId");
 
