@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SISAV - ADM</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
+
+    /* LAYOUT */
+    .app { display: flex; min-height: 100vh; background: #f4f4f0; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 220px; background: #0f3d6e; flex-shrink: 0;
+      display: flex; flex-direction: column;
+      transition: width 0.28s cubic-bezier(.4,0,.2,1), transform 0.28s cubic-bezier(.4,0,.2,1);
+      position: fixed; top: 0; left: 0; height: 100vh; z-index: 100;
+      overflow: hidden;
+    }
+    .sidebar.collapsed { width: 52px; }
+    .sidebar-top { padding: 14px 12px 10px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .logo-icon { width: 28px; height: 28px; background: #185FA5; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .logo-icon svg { width: 14px; height: 14px; fill: #fff; }
+    .logo-text { font-size: 14px; font-weight: 700; color: #fff; white-space: nowrap; opacity: 1; transition: opacity 0.2s; }
+    .sidebar.collapsed .logo-text { opacity: 0; }
+    .toggle-btn { margin-left: auto; background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.5); padding: 4px; border-radius: 5px; flex-shrink: 0; transition: color 0.15s; }
+    .toggle-btn:hover { color: #fff; }
+    .sidebar.collapsed .toggle-btn { margin-left: 0; }
+
+    .nav { padding: 12px 0; flex: 1; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 9px 14px;
+      color: rgba(255,255,255,0.6); cursor: pointer; border-radius: 0;
+      transition: background 0.15s, color 0.15s; white-space: nowrap; border-left: 3px solid transparent;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.07); color: #fff; }
+    .nav-item.active { background: rgba(255,255,255,0.1); color: #fff; border-left-color: #4da3ff; }
+    .nav-icon { width: 18px; height: 18px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+    .nav-label { font-size: 13px; font-weight: 500; opacity: 1; transition: opacity 0.2s; }
+    .sidebar.collapsed .nav-label { opacity: 0; }
+    .sidebar-footer { padding: 12px 14px; border-top: 1px solid rgba(255,255,255,0.08); }
+    .sidebar-user { display: flex; align-items: center; gap: 8px; }
+    .user-avatar { width: 28px; height: 28px; border-radius: 50%; background: #185FA5; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0; }
+    .user-name { font-size: 12px; color: rgba(255,255,255,0.6); white-space: nowrap; opacity: 1; transition: opacity 0.2s; }
+    .sidebar.collapsed .user-name { opacity: 0; }
+
+    /* MAIN */
+    .main { margin-left: 220px; flex: 1; transition: margin-left 0.28s cubic-bezier(.4,0,.2,1); min-width: 0; }
+    .main.shifted { margin-left: 52px; }
+    .topbar { background: #fff; border-bottom: 1px solid #e0dfd8; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; }
+    .topbar-title { font-size: 15px; font-weight: 600; color: #1a1a18; }
+    .week-badge { font-size: 11px; background: #E6F1FB; color: #185FA5; padding: 3px 10px; border-radius: 99px; font-weight: 500; }
+    .page { display: none; padding-bottom: 2rem; }
+    .page.active { display: block; animation: fadeIn 0.22s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* KPI */
+    .kpi-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; padding: 20px 20px 16px; }
+    .kpi { background: #fff; border-radius: 12px; padding: 16px; position: relative; overflow: hidden; border: 1px solid #e0dfd8; }
+    .kpi-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+    .kpi-value { font-size: 28px; font-weight: 600; color: #1a1a18; line-height: 1; }
+    .kpi-sub { font-size: 11px; color: #aaa; margin-top: 5px; }
+    .kpi-accent { position: absolute; bottom: 0; left: 0; height: 3px; }
+
+    /* CARDS GRID */
+    .sections { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 0 20px 20px; }
+    .card { background: #fff; border: 1px solid #e0dfd8; border-radius: 12px; overflow: hidden; }
+    .card-head { padding: 14px 16px; border-bottom: 1px solid #f0efe8; display: flex; align-items: center; gap: 10px; }
+    .card-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+    .card-title { font-size: 14px; font-weight: 600; color: #1a1a18; }
+    .card-sub { font-size: 11px; color: #aaa; margin-top: 1px; }
+
+    /* TABLES SHARED */
+    table { width: 100%; border-collapse: collapse; }
+    thead th { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 0.04em; padding: 8px 16px; text-align: left; background: #fafaf7; border-bottom: 1px solid #f0efe8; white-space: nowrap; }
+    thead th.num { text-align: center; }
+    tbody td { padding: 11px 16px; font-size: 13px; color: #1a1a18; border-bottom: 1px solid #f5f4ef; white-space: nowrap; }
+    tbody td.num { text-align: center; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #fafaf7; }
+    .td-muted { font-size: 12px; color: #999; }
+    .pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 99px; }
+    .pill-red   { background: #FCEBEB; color: #A32D2D; }
+    .pill-amber { background: #FAEEDA; color: #854F0B; }
+    .pill-green { background: #EAF3DE; color: #3B6D11; }
+    .pill-blue  { background: #E6F1FB; color: #185FA5; }
+
+    /* AGENTES SECTION (home) */
+    .full-card { background: #fff; border: 1px solid #e0dfd8; border-radius: 12px; overflow: hidden; margin: 0 20px; }
+    .toolbar { padding: 10px 16px; border-bottom: 1px solid #f0efe8; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: #fafaf7; }
+    .tb-label { font-size: 11px; color: #999; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+    .tb-select, .tb-input { font-size: 12px; border: 1px solid #e0dfd8; border-radius: 6px; padding: 5px 8px; background: #fff; color: #1a1a18; outline: none; }
+    .tb-select:focus, .tb-input:focus { border-color: #185FA5; }
+    .tb-input { width: 160px; }
+    .tb-spacer { flex: 1; }
+    .tb-btn { font-size: 12px; font-weight: 500; border: 1px solid #e0dfd8; border-radius: 6px; padding: 5px 12px; background: #fff; color: #1a1a18; cursor: pointer; display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+    .tb-btn:hover { background: #f0efe8; }
+    .tb-btn.pdf { border-color: #A32D2D; color: #A32D2D; }
+    .tb-btn.pdf:hover { background: #FCEBEB; }
+    .tb-btn.xlsx { border-color: #3B6D11; color: #3B6D11; }
+    .tb-btn.xlsx:hover { background: #EAF3DE; }
+    .agt-wrap { overflow-x: auto; }
+    .agt-table { width: 100%; border-collapse: collapse; min-width: 1400px; }
+    .agt-table thead th { font-size: 10px; padding: 8px 10px; }
+    .agt-table tbody td { padding: 9px 10px; font-size: 12px; }
+    .agt-table td.num, .agt-table th.num { text-align: center; }
+    .info-badge { font-size: 10px; padding: 2px 7px; border-radius: 99px; font-weight: 600; }
+    .info-ok { background: #EAF3DE; color: #3B6D11; }
+    .info-att { background: #FAEEDA; color: #854F0B; }
+    .pager { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-top: 1px solid #f0efe8; font-size: 12px; color: #888; justify-content: flex-end; }
+    .pager button { border: 1px solid #e0dfd8; background: #fff; border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; color: #1a1a18; }
+    .pager button:hover { background: #f0efe8; }
+    .pager button:disabled { opacity: 0.4; cursor: default; }
+
+    /* AGENTES PAGE */
+    .page-header { padding: 20px 20px 4px; }
+    .page-header h2 { font-size: 18px; font-weight: 700; color: #1a1a18; }
+    .page-header p { font-size: 12px; color: #999; margin-top: 3px; }
+    .section-title-bar { padding: 20px 20px 10px; display: flex; align-items: center; gap: 8px; }
+    .section-title-bar h3 { font-size: 14px; font-weight: 700; color: #1a1a18; }
+    .section-title-bar span { font-size: 11px; color: #999; }
+
+    /* DAILY CLOSE TABLE */
+    .daily-card { background: #fff; border: 1px solid #e0dfd8; border-radius: 12px; overflow: hidden; margin: 0 20px; }
+
+    /* WEEKLY SUMMARY */
+    .weekly-card { background: #fff; border: 1px solid #e0dfd8; border-radius: 12px; overflow: hidden; margin: 16px 20px 0; }
+    .weekly-card .card-head { background: linear-gradient(135deg, #0f3d6e 0%, #185FA5 100%); }
+    .weekly-card .card-title { color: #fff; }
+    .weekly-card .card-sub { color: rgba(255,255,255,0.6); }
+    .weekly-card thead th { background: #f0f6ff; color: #185FA5; }
+    .weekly-total { background: #f0f6ff !important; }
+    .weekly-total td { font-weight: 700; color: #0f3d6e !important; font-size: 13px !important; border-top: 2px solid #d0e4f7 !important; }
+    .stat-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 6px; }
+    .stat-chip.blue  { background: #E6F1FB; color: #185FA5; }
+    .stat-chip.green { background: #EAF3DE; color: #3B6D11; }
+    .stat-chip.amber { background: #FAEEDA; color: #854F0B; }
+    .stat-chip.red   { background: #FCEBEB; color: #A32D2D; }
+    .stat-chip.purple{ background: #F0EBFC; color: #6B3AA3; }
+
+    /* MEDAL */
+    .agent-row-inner { display: flex; align-items: center; gap: 10px; }
+    .medal { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+    .m1 { background: #FAEEDA; color: #854F0B; }
+    .m2 { background: #f0efe8; color: #666; }
+    .m3 { background: #f0efe8; color: #666; }
+    .prog { height: 4px; border-radius: 2px; background: #eee; margin-top: 4px; overflow: hidden; }
+    .prog-fill { height: 100%; border-radius: 2px; background: #185FA5; }
+  </style>
+</head>
+<body>
+  <div class="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-top">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      </div>
+      <span class="logo-text">SISAV ADM</span>
+      <button class="toggle-btn" onclick="toggleSidebar()" title="Recolher menu">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+    </div>
+    <nav class="nav">
+      <div class="nav-item active" onclick="navigate('home', this)">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Home</span>
+      </div>
+      <div class="nav-item" onclick="navigate('agentes', this)">
+        <span class="nav-icon">👥</span>
+        <span class="nav-label">Agentes</span>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="user-avatar">CO</div>
+        <span class="user-name">Coordenador</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main" id="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <span class="topbar-title" id="topbar-title">Dashboard</span>
+      <span class="week-badge">Semana 15 / 2026</span>
+    </div>
+
+    <!-- HOME PAGE -->
+    <div class="page active" id="page-home">
+      <div class="kpi-row">
+        <div class="kpi">
+          <div class="kpi-label">Total de registros</div>
+          <div class="kpi-value" id="kpi-total">1.284</div>
+          <div class="kpi-sub">↑ 12% vs semana anterior</div>
+          <div class="kpi-accent" style="width:100%;background:#185FA5"></div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Total de imóveis</div>
+          <div class="kpi-value" id="kpi-imoveis">874</div>
+          <div class="kpi-sub">68% da meta semanal</div>
+          <div class="kpi-accent" style="width:68%;background:#3B6D11"></div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Fechados</div>
+          <div class="kpi-value" id="kpi-fechados">487</div>
+          <div class="kpi-sub">38% do total</div>
+          <div class="kpi-accent" style="width:38%;background:#854F0B"></div>
+        </div>
+      </div>
+
+      <div class="sections">
+        <div class="card">
+          <div class="card-head">
+            <div class="card-icon" style="background:#FCEBEB">📍</div>
+            <div><div class="card-title">Resumo por área</div><div class="card-sub">Focos de maior atividade</div></div>
+          </div>
+          <table>
+            <thead><tr><th>Rua</th><th>Bairro</th><th>Focos</th></tr></thead>
+            <tbody id="area-tbody">
+              <tr><td>Rua Sagitário</td><td class="td-muted">2 de Dezembro</td><td><span class="pill pill-red">25</span></td></tr>
+              <tr><td>Emburrado</td><td class="td-muted">Av. N. S. Aparecida</td><td><span class="pill pill-amber">16</span></td></tr>
+              <tr><td>Rua Guanambi</td><td class="td-muted">Valdemar Sampaio</td><td><span class="pill pill-green">13</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <div class="card-icon" style="background:#FAEEDA">🏆</div>
+            <div><div class="card-title">Desempenho individual</div><div class="card-sub">Agentes · semana atual</div></div>
+          </div>
+          <table>
+            <thead><tr><th>Agente</th><th>Imóveis</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><div class="agent-row-inner"><div class="medal m1">1°</div><div><div style="font-size:13px;font-weight:500">João Silva</div><div class="prog"><div class="prog-fill" style="width:100%"></div></div></div></div></td>
+                <td><strong>36</strong></td>
+              </tr>
+              <tr>
+                <td><div class="agent-row-inner"><div class="medal m2">2°</div><div><div style="font-size:13px;font-weight:500">Marina Souza</div><div class="prog"><div class="prog-fill" style="width:83%"></div></div></div></div></td>
+                <td>30</td>
+              </tr>
+              <tr>
+                <td><div class="agent-row-inner"><div class="medal m3">3°</div><div><div style="font-size:13px;font-weight:500">Alana Cardoso</div><div class="prog"><div class="prog-fill" style="width:78%"></div></div></div></div></td>
+                <td>28</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TABELA CAMPO -->
+      <div class="full-card">
+        <div class="card-head">
+          <div class="card-icon" style="background:#E6F1FB">📋</div>
+          <div><div class="card-title">Registros de campo</div><div class="card-sub">Dados detalhados por imóvel</div></div>
+        </div>
+        <div class="toolbar">
+          <span class="tb-label">Filtrar:</span>
+          <select class="tb-select" id="h-filter-agente" onchange="homeApplyFilters()">
+            <option value="">Todos os agentes</option>
+            <option>João Silva</option><option>Marina Souza</option><option>Alana Cardoso</option>
+          </select>
+          <select class="tb-select" id="h-filter-tipo" onchange="homeApplyFilters()">
+            <option value="">Todos os tipos</option>
+            <option>Residencial</option><option>Comercial</option><option>Terreno</option>
+          </select>
+          <select class="tb-select" id="h-filter-info" onchange="homeApplyFilters()">
+            <option value="">Todas inf.</option><option>Normal</option><option>Atenção</option>
+          </select>
+          <input class="tb-input" id="h-filter-search" type="text" placeholder="Buscar logradouro..." oninput="homeApplyFilters()">
+          <div class="tb-spacer"></div>
+          <button class="tb-btn pdf" onclick="exportPDF(homeFiltered)">⬇ PDF</button>
+          <button class="tb-btn xlsx" onclick="exportXLSX(homeFiltered, 'SISAV_Campo')">⬇ Excel</button>
+        </div>
+        <div class="agt-wrap">
+          <table class="agt-table">
+            <thead><tr>
+              <th>Data</th><th>Quarteirão</th><th>Lado</th><th>Logradouro</th>
+              <th class="num">Nº</th><th class="num">Seq.</th><th>Compl.</th><th>Tipo</th>
+              <th>Horário</th><th class="num">Entrada</th>
+              <th class="num">A1</th><th class="num">A2</th><th class="num">B</th><th class="num">C</th>
+              <th class="num">D1</th><th class="num">D2</th><th class="num">E</th>
+              <th class="num">Elim.</th><th class="num">Insp. L1</th>
+              <th class="num">Amost. Ini.</th><th class="num">Amost. Fin.</th>
+              <th class="num">Tubitos</th><th class="num">Queda(g)</th><th class="num">Dep.Trat.</th>
+              <th>Informação</th>
+            </tr></thead>
+            <tbody id="home-tbody"></tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <span id="home-page-info" style="font-size:12px;color:#888"></span>
+          <button id="home-btn-prev" onclick="homeChangePage(-1)">← Anterior</button>
+          <button id="home-btn-next" onclick="homeChangePage(1)">Próximo →</button>
+        </div>
+      </div>
+    </div><!-- /HOME -->
+
+    <!-- AGENTES PAGE -->
+    <div class="page" id="page-agentes">
+      <div class="page-header">
+        <h2>👥 Agentes</h2>
+        <p>Acompanhamento de fechamentos diários e semanais por agente</p>
+      </div>
+
+      <!-- FECHAMENTO DIÁRIO -->
+      <div class="section-title-bar">
+        <h3>📅 Fechamento Diário</h3>
+        <span>Resumo por agente ao fim de cada turno</span>
+      </div>
+      <div class="daily-card">
+        <div class="toolbar">
+          <span class="tb-label">Filtrar:</span>
+          <select class="tb-select" id="d-filter-agente" onchange="dailyApplyFilters()">
+            <option value="">Todos os agentes</option>
+            <option>João Silva</option><option>Marina Souza</option><option>Alana Cardoso</option>
+          </select>
+          <select class="tb-select" id="d-filter-data" onchange="dailyApplyFilters()">
+            <option value="">Todas as datas</option>
+            <option>14/04/2026</option><option>13/04/2026</option><option>12/04/2026</option>
+            <option>11/04/2026</option><option>10/04/2026</option>
+          </select>
+          <div class="tb-spacer"></div>
+          <button class="tb-btn pdf" onclick="exportDailyPDF()">⬇ PDF</button>
+          <button class="tb-btn xlsx" onclick="exportDailyXLSX()">⬇ Excel</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr>
+              <th>Data</th>
+              <th>Agente</th>
+              <th class="num">Imóveis Fechados</th>
+              <th class="num">Imóveis Inspecionados</th>
+              <th class="num">Depósitos Eliminados</th>
+              <th class="num">Larvas Tratadas</th>
+              <th class="num">Recuperados</th>
+              <th>Status</th>
+            </tr></thead>
+            <tbody id="daily-tbody"></tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <span id="daily-page-info" style="font-size:12px;color:#888"></span>
+          <button id="daily-btn-prev" onclick="dailyChangePage(-1)">← Anterior</button>
+          <button id="daily-btn-next" onclick="dailyChangePage(1)">Próximo →</button>
+        </div>
+      </div>
+
+      <!-- FECHAMENTO SEMANAL -->
+      <div class="section-title-bar" style="margin-top:4px">
+        <h3>📊 Fechamento Semanal</h3>
+        <span>Somatória de todos os agentes · Semana 15 (10–14/04/2026)</span>
+      </div>
+      <div class="weekly-card">
+        <div class="card-head">
+          <div class="card-icon" style="background:rgba(255,255,255,0.15);font-size:16px">🏁</div>
+          <div>
+            <div class="card-title">Resumo Semanal Consolidado</div>
+            <div class="card-sub">Semana 15 · 10 a 14 de abril de 2026</div>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr>
+              <th>Agente</th>
+              <th class="num">Im. Fechados</th>
+              <th class="num">Im. Inspecionados</th>
+              <th class="num">Dep. Eliminados</th>
+              <th class="num">Larvas Tratadas</th>
+              <th class="num">Recuperados</th>
+              <th class="num">Total Dias</th>
+            </tr></thead>
+            <tbody id="weekly-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /AGENTES PAGE -->
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="sisav-adm.js">
+</script>
+</body>
+</html>

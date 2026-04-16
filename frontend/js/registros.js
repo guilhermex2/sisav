@@ -1,4 +1,8 @@
 // registros.js
+/*
+Script para salvar os Imoveis durante o dia no campo
+Todos os registros são salvos no indexdDb
+*/
 import { db } from "./db.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -12,10 +16,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  // ✅ Extrai a data da chave "2025-01-10_agenteId123"
+  // Extrai a data da chave "2025-01-10_agenteId123"
   const data = turnoAtivoKey.split("_")[0];
 
-  // ✅ Busca com chave composta
+  // Busca com chave composta
   const turnoAtivo = await db.turnos.get({ data, agenteId });
 
   if (!turnoAtivo || turnoAtivo.finalizadoEm) {

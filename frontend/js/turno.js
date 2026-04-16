@@ -1,4 +1,11 @@
 // turno.js
+/*
+Script para pagina de criação de turno. É possivel criar apenas um turno
+por data, por exmplo, dia 25 de março so pode haver um turno criado no dispositivo
+Caso tente criar um novo turno no mesmo dia, será bloqueado por verificações existesntes
+no script.
+
+*/
 import { db } from "./db.js";
 
 document.addEventListener("DOMContentLoaded", async () => {

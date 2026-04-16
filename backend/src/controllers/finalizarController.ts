@@ -75,11 +75,33 @@ const toBool = (val: unknown): boolean | null => {
   return null;
 };
 
-function definirTipoVisita(r: RegistroPayload): "NORMAL" | "R_F" | "C_F" | "RECUPERACAO" {
-  if (r.tipoImovel === "R-F") return "R_F";
-  if (r.tipoImovel === "C-F") return "C_F";
-  if (r.tipoImovel === "RECUPERACAO") return "RECUPERACAO";
-  return "NORMAL";
+function definirTipoVisita(
+  r: RegistroPayload
+): "NORMAL" | "R_F" | "C_F" | "RECUPERACAO" {
+  const tipo = (r.tipoImovel ?? "").toUpperCase().trim();
+
+  switch (tipo) {
+    case "R":
+      return "NORMAL"; // ou RECUPERACAO dependendo da regra real
+
+    case "R-F":
+      return "R_F";
+
+    case "C":
+      return "NORMAL";
+
+    case "C-F":
+      return "C_F";
+
+    case "O":
+      return "NORMAL";
+
+    case "RECUPERACAO":
+      return "RECUPERACAO";
+
+    default:
+      throw new Error(`Tipo de visita inválido recebido: ${tipo}`);
+  }
 }
 
 // =================================================================
@@ -202,7 +224,7 @@ export async function finalizarTurno(
   } catch (err) {
     const error = err as Error;
     console.error("❌ Erro ao finalizar turno:", error.message);
-
+    throw error;
     return res.status(500).json({
       message: "Erro interno ao salvar turno no banco de dados.",
       detalhe: error.message,
