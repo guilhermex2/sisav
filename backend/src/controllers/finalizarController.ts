@@ -138,7 +138,8 @@ export async function finalizarTurno(
   }
 
   try {
-    const resultado = await prisma.$transaction(async (tx: TransactionClient) => {
+    const resultado = await prisma.$transaction(
+    async (tx: TransactionClient) => {
 
       // 1️⃣ Criar o turno
       const turnoSalvo = await tx.turno.create({
@@ -155,66 +156,71 @@ export async function finalizarTurno(
         },
       });
 
-      // 2️⃣ Criar visitas vinculadas ao turno
-      for (const r of registros) {
+      // 2️⃣ Upsert de todos os imóveis de uma vez
+      const codigosImoveis = registros.map((r) =>
+        `${r.quarteirao ?? ""}-${r.numero ?? ""}-${r.logradouro ?? ""}`.trim()
+      );
 
-        // 🔹 1. Definir um código único do imóvel
-        const codigoImovel = `${r.quarteirao ?? ""}-${r.numero ?? ""}-${r.logradouro ?? ""}`.trim();
+      // Insere apenas os que não existem
+      await tx.imovel.createMany({
+        data: registros.map((r) => ({
+          codigo:      `${r.quarteirao ?? ""}-${r.numero ?? ""}-${r.logradouro ?? ""}`.trim(),
+          municipio:   turno.municipio,
+          localidade:  turno.localidade,
+          quarteirao:  r.quarteirao  ?? null,
+          logradouro:  r.logradouro  ?? null,
+          numero:      r.numero      ?? null,
+          complemento: r.complemento ?? null,
+        })),
+        skipDuplicates: true, // equivalente ao update: {} do upsert
+      });
 
-        // 🔹 2. Criar ou buscar imóvel
-        const imovel = await tx.imovel.upsert({
-          where: { codigo: codigoImovel },
-          update: {},
-          create: {
-            codigo:      codigoImovel,
-            municipio:   turno.municipio,
-            localidade:  turno.localidade,
-            quarteirao:  r.quarteirao  ?? null,
-            logradouro:  r.logradouro  ?? null,
-            numero:      r.numero      ?? null,
-            complemento: r.complemento ?? null,
-          },
-        });
+      // 3️⃣ Busca todos os imóveis criados/existentes em uma query só
+      const imoveisSalvos = await tx.imovel.findMany({
+        where: { codigo: { in: codigosImoveis } },
+        select: { id: true, codigo: true },
+      });
 
-        // 🔹 3. Criar visita
-        await tx.visita.create({
-          data: {
+      const imovelMap = new Map(imoveisSalvos.map((i) => [i.codigo, i.id]));
+
+      // 4️⃣ Cria todas as visitas em lote
+      await tx.visita.createMany({
+        data: registros.map((r) => {
+          const codigoImovel = `${r.quarteirao ?? ""}-${r.numero ?? ""}-${r.logradouro ?? ""}`.trim();
+          return {
             turnoId:  turnoSalvo.id,
             agenteId: Number(turno.agenteId),
-            imovelId: imovel.id,
-
+            imovelId: imovelMap.get(codigoImovel)!,
             tipoVisita: definirTipoVisita(r),
-
             horarioEntrada: r.horarioEntrada
               ? new Date(`${turno.data.split("T")[0]}T${r.horarioEntrada}:00`)
               : null,
-
-            informacao: r.informacao ?? null,
-
-            a1: toInt(r.a1),
-            a2: toInt(r.a2),
-            b:  toInt(r.b),
-            c:  toInt(r.c),
-            d1: toInt(r.d1),
-            d2: toInt(r.d2),
-            e:  toInt(r.e),
-
-            inspL1: toBool(r.inspL1),
-            imTrat: toBool(r.imTrat),
-
+            informacao:          r.informacao          ?? null,
+            a1:                  toInt(r.a1),
+            a2:                  toInt(r.a2),
+            b:                   toInt(r.b),
+            c:                   toInt(r.c),
+            d1:                  toInt(r.d1),
+            d2:                  toInt(r.d2),
+            e:                   toInt(r.e),
+            inspL1:              toBool(r.inspL1),
+            imTrat:              toBool(r.imTrat),
             amostraInicial:      toInt(r.amostraInicial),
             amostraFinal:        toInt(r.amostraFinal),
             qtdDepTrat:          toInt(r.qtdDepTrat),
             depositosEliminados: toInt(r.depositosEliminados),
             qtdTubitos:          toInt(r.qtdTubitos),
             quedaGramas:         toInt(r.quedaGramas),
-          },
-        });
-      }
+          };
+        }),
+      });
 
       return turnoSalvo;
-    });
-
+    },
+    {
+      timeout: 30_000, // 30s — ajuste conforme necessário
+    }
+);
     return res.status(201).json({
       message:        "Turno finalizado e sincronizado com sucesso.",
       turnoId:        resultado.id,
