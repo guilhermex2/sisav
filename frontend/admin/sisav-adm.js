@@ -100,7 +100,7 @@ addEventListener("DOMContentLoaded", async () => {
 
   // ─── CARREGAR DADOS ───────────────────────────────────────────────────────────
   async function carregarVisitas() {
-    const res  = await fetch("http://localhost:4000/sisav/adm");
+    const res  = await fetch("https://api.render.com/deploy/srv-d6kdfqd6ubrc73ecuneg?key=Y1DIXRdPouk/sisav/adm");
     const data = await res.json();
     allFieldData = Array.isArray(data) ? data : (data.dados || []);
     homeFiltered = [...allFieldData];
@@ -111,7 +111,7 @@ addEventListener("DOMContentLoaded", async () => {
   }
 
   async function carregarKpis() {
-    const res  = await fetch("http://localhost:4000/sisav/adm/kpis");
+    const res  = await fetch("https://api.render.com/deploy/srv-d6kdfqd6ubrc73ecuneg?key=Y1DIXRdPouk/sisav/adm/kpis");
     const data = await res.json();
     document.getElementById("kpi-total").textContent   = data.totalRegistros;
     document.getElementById("kpi-imoveis").textContent = data.totalImoveis;
@@ -119,7 +119,7 @@ addEventListener("DOMContentLoaded", async () => {
   }
 
   async function carregarResumoArea() {
-    const res  = await fetch("http://localhost:4000/sisav/adm/resumo-area");
+    const res  = await fetch("https://api.render.com/deploy/srv-d6kdfqd6ubrc73ecuneg?key=Y1DIXRdPouk/sisav/adm/resumo-area");
     const data = await res.json();
     const rows = Array.isArray(data) ? data : (data.dados || []);
     document.getElementById("area-tbody").innerHTML = rows
@@ -135,7 +135,7 @@ addEventListener("DOMContentLoaded", async () => {
   }
 
   async function carregarMVPs() {
-    const res  = await fetch("http://localhost:4000/sisav/adm/desempenho-individual");
+    const res  = await fetch("https://api.render.com/deploy/srv-d6kdfqd6ubrc73ecuneg?key=Y1DIXRdPouk/sisav/adm/desempenho-individual");
     const data = await res.json();
     const rows = Array.isArray(data) ? data : (data.dados || []);
     if (!rows.length) return;
@@ -366,7 +366,7 @@ addEventListener("DOMContentLoaded", async () => {
 
   // ─── FECHAMENTO SEMANAL ───────────────────────────────────────────────────────
   async function renderWeekly() {
-    const res  = await fetch("http://localhost:4000/sisav/adm/desempenho-individual");
+    const res  = await fetch("https://api.render.com/deploy/srv-d6kdfqd6ubrc73ecuneg?key=Y1DIXRdPouk/sisav/adm/desempenho-individual");
     const data = await res.json();
     const rows = Array.isArray(data) ? data : (data.dados || []);
 

@@ -13,8 +13,6 @@ async function enviarParaAPI(turno, registros) {
     throw new Error("Token de autenticação não encontrado. Faça login novamente.");
   }
 
-  // ✅ CORRIGIDO: lê nomeAgente e agenteId salvos no turno
-  // com fallback para o campo "agente" legado
   const payload = {
     turno: {
       data:                turno.data,
@@ -24,9 +22,9 @@ async function enviarParaAPI(turno, registros) {
       categoriaLocalidade: turno.categoria_localidade ?? null,
       zona:                turno.zona                 ?? null,
       atividade:           turno.atividade            ?? null,
-      agenteId:   parseInt(turno.agenteId, 10)  || turno.agente, // ✅ fallback para turnos antigos
-      nomeAgente:          turno.nomeAgente || turno.agente, // ✅ fallback para turnos antigos
-    },  
+      agenteId:   parseInt(turno.agenteId, 10)  || turno.agente,
+      nomeAgente:          turno.nomeAgente || turno.agente,
+    },
     registros: registros.map(r => ({
       quarteirao:          r.quarteirao          ?? null,
       sequencia:           r.sequencia           ?? null,
@@ -53,6 +51,7 @@ async function enviarParaAPI(turno, registros) {
       depositosEliminados: r.depositos_eliminados ?? null,
       qtdTubitos:          r.qtd_tubitos         ?? null,
       quedaGramas:         r.queda_gramas        ?? null,
+      isRecuperacao:       r.is_recuperacao      ?? false, // ✅ informa a API se é recuperação
     })),
   };
 
@@ -77,12 +76,12 @@ async function enviarParaAPI(turno, registros) {
 // 🖥️ Inicialização da página
 // ==============================================================
 document.addEventListener("DOMContentLoaded", async () => {
-  const elData      = document.querySelector(".data");
-  const elBairro    = document.querySelector(".bairro");
-  const indicadores = document.querySelectorAll(".indicator");
-  const tbody       = document.querySelector("tbody");
+  const elData       = document.querySelector(".data");
+  const elBairro     = document.querySelector(".bairro");
+  const indicadores  = document.querySelectorAll(".indicator");
+  const tbody        = document.querySelector("tbody");
   const btnFinalizar = document.querySelector(".btn-success");
-  const badge       = document.querySelector(".badge");
+  const badge        = document.querySelector(".badge");
 
   try {
     const dataTurnoAtivo = localStorage.getItem("turnoAtivo");
@@ -93,8 +92,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    const [data, agenteId] = dataTurnoAtivo.split("_")
-    const turno = await db.turnos.get({data, agenteId})
+    const [data, agenteId] = dataTurnoAtivo.split("_");
+    const turno = await db.turnos.get({ data, agenteId });
 
     if (!turno || turno.finalizadoEm) {
       alert("Este turno já foi finalizado.");
@@ -106,20 +105,23 @@ document.addEventListener("DOMContentLoaded", async () => {
     elData.textContent   = new Date(turno.data).toLocaleDateString("pt-BR");
     elBairro.textContent = turno.localidade || "Não informado";
 
-    const registros = await db.registros
+    // ✅ Busca todos os registros do dia
+    const todosRegistros = await db.registros
       .where("data_turno")
       .equals(turno.data)
       .toArray();
 
-    const recuperacoes = (await db.recuperacao.toArray())
-      .filter(r => r.data?.slice(0, 10) === turno.data?.slice(0, 10));
+    // ✅ Separa registros normais de recuperações
+    // Recuperações têm is_recuperacao: true e NÃO entram na soma do dia
+    const registros    = todosRegistros.filter(r => !r.is_recuperacao);
+    const recuperacoes = todosRegistros.filter(r =>  r.is_recuperacao);
 
-    // 🔹 Calcular resumo
+    // 🔹 Calcular resumo apenas com registros normais
     const resumo = {
-      inspecionados: registros.length,
+      inspecionados: registros.length,    // ✅ sem recuperações
       focos:         0,
       fechados:      0,
-      recuperados:   recuperacoes.length,
+      recuperados:   recuperacoes.length, // ✅ recuperações do dia via campo.js
       tratamentos:   0,
       depositos:     0,
     };
@@ -167,12 +169,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       try {
         // 1️⃣ Marca como finalizado no IndexedDB
         const finalizadoEm = new Date().toISOString();
-        await db.turnos.update({data: turno.data , agenteId: turno.agenteId}, {finalizadoEm, resumo});
+        await db.turnos.update({ data: turno.data, agenteId: turno.agenteId }, { finalizadoEm, resumo });
         turno.finalizadoEm = finalizadoEm;
 
-        // 2️⃣ Envia para a API
+        // 2️⃣ Envia para a API (todos os registros, inclusive recuperações com a flag)
         try {
-          await enviarParaAPI(turno, registros);
+          await enviarParaAPI(turno, todosRegistros);
 
           // ✅ Marca como sincronizado no IndexedDB
           const sincronizadoEm = new Date().toISOString();
@@ -189,7 +191,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           );
         }
 
-        // 3️⃣ Gera o PDF
+        // 3️⃣ Gera o PDF (apenas registros normais no relatório)
         await gerarPDF(turno, resumo, registros);
 
         // 4️⃣ Limpa turno ativo
@@ -229,7 +231,7 @@ async function gerarPDF(turno, resumo, registros) {
   pdf.text(`Data: ${new Date(turno.data).toLocaleDateString("pt-BR")}`, 14, 25);
   pdf.text(`Município: ${turno.municipio || "Não informado"}`, 14, 32);
   pdf.text(`Localidade: ${turno.localidade || "Não informado"}`, 14, 39);
-  pdf.text(`Agente: ${turno.nomeAgente || turno.agente}`, 14, 46); // ✅ usa nomeAgente com fallback
+  pdf.text(`Agente: ${turno.nomeAgente || turno.agente}`, 14, 46);
   pdf.text("Resumo do Turno", 14, 52);
 
   pdf.autoTable({

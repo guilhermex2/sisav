@@ -8,106 +8,152 @@
   <meta name="theme-color" content="#0d6efd">
   <link rel="stylesheet" href="../css/style.css">
   <style>
+    :root {
+  --sb-width: 260px;
+  --sb-accent: #4f6ef7;
+  --sb-accent-light: #eef1ff;
+  --sb-border: #e2e8f0;
+  --sb-text: #2d3748;
+  --sb-muted: #718096;
+}
 
-        /* ===== MENU LATERAL ===== */
-    .sidebar {
-      width: 240px;
-      background-color: #0d6efd;
-      color: #fff;
-      position: fixed;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      padding: 20px 10px;
-      display: flex;
-      flex-direction: column;
-      transform: translateX(0);
-      transition: transform 0.3s ease;
-      z-index: 1000;
-    }
+.sidebar {
+  width: var(--sb-width);
+  background: #fff;
+  border-right: 0.5px solid var(--sb-border);
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(0);
+  transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+  z-index: 1000;
+}
+.sidebar.hidden { transform: translateX(calc(-1 * var(--sb-width))); }
 
-    .sidebar.hidden {
-      transform: translateX(-100%);
-    }
+.sb-header {
+  padding: 1.25rem 1rem 1rem;
+  border-bottom: 0.5px solid var(--sb-border);
+  display: flex; align-items: center; gap: 10px;
+}
+.sb-title  { font-size: 14px; font-weight: 500; }
+.sb-subtitle { font-size: 11px; color: var(--sb-muted); }
+.sb-close {
+  margin-left: auto; width: 28px; height: 28px;
+  border-radius: 6px; border: 0.5px solid var(--sb-border);
+  background: transparent; cursor: pointer; color: var(--sb-muted);
+}
+.sb-close:hover { background: var(--sb-accent-light); color: var(--sb-accent); }
 
-    .sidebar h4 {
-      text-align: center;
-      margin-bottom: 30px;
-      font-size: 1.2rem;
-    }
+.sb-section {
+  padding: .75rem .75rem .25rem;
+  font-size: 10px; font-weight: 500;
+  letter-spacing: .08em; color: var(--sb-muted); text-transform: uppercase;
+}
 
-    .sidebar a {
-      color: #ccc;
-      text-decoration: none;
-      display: block;
-      padding: 10px 15px;
-      border-radius: 8px;
-      margin-bottom: 5px;
-      transition: background 0.3s;
-    }
+.sb-nav {
+  flex: 1; padding: .5rem .75rem;
+  overflow-y: auto; display: flex;
+  flex-direction: column; gap: 2px;
+}
+.sb-link {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px; border-radius: 8px;
+  text-decoration: none; color: var(--sb-text);
+  font-size: 13px; transition: background .15s, color .15s;
+}
+.sb-link:hover  { background: var(--sb-accent-light); color: var(--sb-accent); }
+.sb-link.active { background: var(--sb-accent-light); color: var(--sb-accent); font-weight: 500; }
 
-    .sidebar a:hover {
-      background-color: #0b5ed7;
-    }
+.sb-icon {
+  width: 28px; height: 28px; border-radius: 6px;
+  background: #f1f5f9;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; flex-shrink: 0;
+}
+.sb-badge {
+  margin-left: auto; background: var(--sb-accent);
+  color: #fff; font-size: 10px; padding: 2px 6px;
+  border-radius: 20px; font-weight: 500;
+}
+.sb-divider { height: 0.5px; background: var(--sb-border); margin: .5rem .75rem; }
 
-    .sidebar .logout {
-      margin-top: auto;
-      background: #dc3545;
-      text-align: center;
-    }
+.sb-footer { padding: .75rem; }
+.sb-logout {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px; border-radius: 8px;
+  color: #c53030; font-size: 13px; cursor: pointer;
+  border: 0.5px solid #fed7d7; background: #fff5f5;
+  transition: background .15s; width: 100%;
+}
+.sb-logout:hover { background: #fed7d7; }
 
-    /* ===== BOTÃO DE MENU ===== */
-    .menu-toggle {
-      position: fixed;
-      top: 15px;
-      left: 15px;
-      background-color: #0d6efd;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      padding: 8px 12px;
-      font-size: 20px;
-      cursor: pointer;
-      z-index: 1100;
-      transition: background 0.3s;
-    }
+.menu-toggle {
+  position: fixed; top: 12px; left: 12px; z-index: 1100;
+  width: 40px; height: 40px; border-radius: 10px;
+  border: 0.5px solid var(--sb-border); background: #fff;
+  cursor: pointer; transition: left .3s cubic-bezier(.4,0,.2,1);
+}
+.menu-toggle.shifted { left: calc(var(--sb-width) + 12px); }
+.burger { display: flex; flex-direction: column; gap: 4px; align-items: center; }
+.burger span { display: block; width: 16px; height: 1.5px; background: var(--sb-text); border-radius: 2px; }
 
-    .menu-toggle:hover {
-      background-color: #0b5ed7;
-    }
-    /* ===== RESPONSIVIDADE ===== */
-    @media (max-width: 992px) {
-      .sidebar {
-        transform: translateX(-100%);
-      }
-      .sidebar.show {
-        transform: translateX(0);
-      }
-      .content {
-        margin-left: 0;
-      }
-    }
+.overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.2);
+  z-index: 500; opacity: 0; pointer-events: none;
+  transition: opacity .3s;
+}
+.overlay.visible { opacity: 1; pointer-events: all; }
+
+.content { margin-left: var(--sb-width); transition: margin .3s ease; }
+.content.expanded { margin-left: 0; }
+
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(calc(-1 * var(--sb-width))); }
+  .sidebar.show { transform: translateX(0); }
+  .menu-toggle.shifted { left: 12px; }
+  .content { margin-left: 0; }
+}
   </style>
 </head>
 <body>
-  <!-- BOTÃO PARA ABRIR MENU -->
-  <button class="menu-toggle" id="menuToggle">☰</button>
+  <button class="menu-toggle" id="menuToggle" title="Abrir/fechar menu">
+    <div class="burger"><span></span><span></span><span></span></div>
+  </button>
 
-  <!-- MENU LATERAL -->
   <nav class="sidebar hidden" id="sidebar">
-    <h4>Menu</h4>
-    <a href="turno.html" style="color: white;">🕒 Turno Diário</a>
-    <a href="ficha-registro.html">🏠 Campo</a>
-    <a href="historico.html">📋 Histórico</a>
-    <a href="tabela-registros.html">📝 Tabela Registros</a>
-    <a href="ficha-recuperacao.html">📂 Recuperação</a>
-    <a href="tabela-recuperacao.html">📂 Tabela Registros Recuperação</a>
-    <a href="resumo_campo.html">📊 Resumo</a>
-    <button id="btnInstalar" style="display: none; background: #28a745; color: white; border: none; padding: 10px; margin: 10px; border-radius: 8px; cursor: pointer;">
-      📲 Instalar App
-    </button>
-    <a href="#" class="logout">🚪 Sair</a>
+    <div class="sb-header">
+      <div class="sb-logo"><!-- ícone ou logo --></div>
+      <div>
+        <div class="sb-title">Sistema de Campo</div>
+        <div class="sb-subtitle">Painel principal</div>
+      </div>
+      <button class="sb-close" id="sbClose">✕</button>
+    </div>
+
+    <nav class="sb-nav">
+      <div class="sb-section">Principal</div>
+      <a class="sb-link active" href="turno.html"><span class="sb-icon">🕒</span> Turno diário <span class="sb-badge">Hoje</span></a>
+      <a class="sb-link" href="ficha-registro.html"><span class="sb-icon">🏠</span> Campo</a>
+      <a class="sb-link" href="resumo_campo.html"><span class="sb-icon">📊</span> Resumo</a>
+
+      <div class="sb-section">Registros</div>
+      <a class="sb-link" href="historico.html"><span class="sb-icon">📋</span> Histórico</a>
+      <a class="sb-link" href="pendentes.html"><span class="sb-icon">⏳</span> Pendentes</a>
+      <a class="sb-link" href="tabela-registros.html"><span class="sb-icon">📝</span> Tabela de registros</a>
+
+      <div class="sb-section">Recuperação</div>
+      <a class="sb-link" href="ficha-recuperacao.html"><span class="sb-icon">📂</span> Ficha de recuperação</a>
+      <a class="sb-link" href="tabela-recuperacao.html"><span class="sb-icon">📂</span> Tabela de recuperação</a>
+    </nav>
+
+    <div class="sb-divider"></div>
+    <div class="sb-footer">
+      <button class="sb-logout logout"><span class="sb-icon">🚪</span> Sair</button>
+    </div>
   </nav>
+
+  <div class="overlay" id="overlay"></div>
 
   <div class="container">
     <h1>Cadastro do Turno Diário</h1>
@@ -180,20 +226,38 @@
   <script src="https://cdn.jsdelivr.net/npm/dexie@4.0.1/dist/dexie.min.js"></script>
   <script type="module" src="../js/turno.js"></script>
   <script>
-    const menuToggle = document.getElementById("menuToggle");
-    const sidebar = document.getElementById("sidebar");
-    const btnSair = document.querySelector(".logout")
+  const sidebar    = document.getElementById('sidebar');
+  const toggle     = document.getElementById('menuToggle');
+  const overlay    = document.getElementById('overlay');
+  const content    = document.querySelector('.content');
 
-    menuToggle.addEventListener("click", () => {
-      sidebar.classList.toggle("show");
-      sidebar.classList.toggle("hidden");
-    });
+  function openMenu() {
+    sidebar.classList.remove('hidden');
+    sidebar.classList.add('show');
+    overlay.classList.add('visible');
+    if (window.innerWidth > 768) {
+      toggle.classList.add('shifted');
+      content?.classList.remove('expanded');
+    }
+  }
+  function closeMenu() {
+    sidebar.classList.add('hidden');
+    sidebar.classList.remove('show');
+    overlay.classList.remove('visible');
+    toggle.classList.remove('shifted');
+    content?.classList.add('expanded');
+  }
 
-    btnSair.addEventListener('click', () => {
-      //Redirecionar ou usar para logout ( limpar o db local e voltar para turno)
-      console.log('clicou em sair!')
-    })
-    console.log("Turno Diário page loaded.");
+  toggle.addEventListener('click', () =>
+    sidebar.classList.contains('hidden') ? openMenu() : closeMenu()
+  );
+  overlay.addEventListener('click', closeMenu);
+  document.getElementById('sbClose').addEventListener('click', closeMenu);
+
+  document.querySelector('.logout').addEventListener('click', () => {
+    // TODO: limpar localStorage/IndexedDB e redirecionar
+    console.log('Logout acionado');
+  });
   </script>
   <script>
     let deferredPrompt;

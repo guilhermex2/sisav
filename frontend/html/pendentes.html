@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pendentes – Antivetorial</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --azul: #1565C0;
+      --azul-hover: #0D47A1;
+      --azul-claro: #1976D2;
+      --laranja: #F57C00;
+      --laranja-hover: #E65100;
+      --verde: #2E7D32;
+      --vermelho: #C62828;
+      --cinza-bg: #F4F6F9;
+      --cinza-borda: #DDE3EC;
+      --texto: #1A1A2E;
+      --texto-leve: #5C6B82;
+      --branco: #FFFFFF;
+      --sombra: 0 2px 8px rgba(0,0,0,0.10);
+      --sombra-card: 0 4px 16px rgba(21,101,192,0.08);
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--cinza-bg);
+      color: var(--texto);
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── SIDEBAR ── */
+    #sidebar {
+      width: 240px;
+      min-height: 100vh;
+      background: var(--azul);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0;
+      z-index: 100;
+      transition: transform 0.3s ease;
+    }
+    #sidebar.fechado { transform: translateX(-240px); }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 18px 16px;
+      background: var(--azul-hover);
+    }
+    .btn-menu {
+      background: none; border: none; cursor: pointer;
+      color: var(--branco); font-size: 22px; line-height: 1;
+      padding: 2px 4px;
+    }
+    .sidebar-header span {
+      color: var(--branco);
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    nav a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 20px;
+      color: rgba(255,255,255,0.88);
+      text-decoration: none;
+      font-size: 14.5px;
+      transition: background 0.15s;
+      border-left: 3px solid transparent;
+    }
+    nav a:hover { background: rgba(255,255,255,0.10); }
+    nav a.ativo {
+      background: rgba(255,255,255,0.15);
+      border-left-color: var(--branco);
+      color: var(--branco);
+      font-weight: 600;
+    }
+    nav a .icon { font-size: 17px; width: 22px; text-align: center; }
+
+    /* ── MAIN ── */
+    #main {
+      margin-left: 240px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      transition: margin-left 0.3s ease;
+    }
+    #main.expandido { margin-left: 0; }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      background: var(--branco);
+      border-bottom: 1px solid var(--cinza-borda);
+      padding: 0 28px;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--sombra);
+      position: sticky; top: 0; z-index: 50;
+    }
+    .topbar-esq { display: flex; align-items: center; gap: 14px; }
+    .btn-toggle-sidebar {
+      display: none;
+      background: none; border: none; cursor: pointer;
+      font-size: 22px; color: var(--azul);
+    }
+    .topbar h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--azul);
+      letter-spacing: 0.4px;
+    }
+    .badge-total {
+      background: var(--laranja);
+      color: var(--branco);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.3px;
+    }
+    .topbar-dir { display: flex; align-items: center; gap: 10px; }
+    .btn-atualizar {
+      background: var(--azul);
+      color: var(--branco);
+      border: none;
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      transition: background 0.15s;
+    }
+    .btn-atualizar:hover { background: var(--azul-hover); }
+    .btn-atualizar.girando .icon-refresh { animation: girar 0.8s linear infinite; }
+    @keyframes girar { to { transform: rotate(360deg); } }
+
+    /* ── FILTROS ── */
+    .filtros-wrap {
+      padding: 20px 28px 8px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .filtro-group { display: flex; flex-direction: column; gap: 4px; }
+    .filtro-group label { font-size: 11px; font-weight: 600; color: var(--texto-leve); text-transform: uppercase; letter-spacing: 0.5px; }
+    .filtro-group select,
+    .filtro-group input {
+      border: 1.5px solid var(--cinza-borda);
+      border-radius: 6px;
+      padding: 7px 12px;
+      font-size: 13.5px;
+      color: var(--texto);
+      background: var(--branco);
+      outline: none;
+      transition: border-color 0.15s;
+      min-width: 170px;
+    }
+    .filtro-group select:focus,
+    .filtro-group input:focus { border-color: var(--azul-claro); }
+
+    /* ── CONTEÚDO ── */
+    .conteudo { padding: 12px 28px 40px; }
+
+    /* Estado vazio / erro / carregando */
+    .estado-tela {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      min-height: 280px;
+      color: var(--texto-leve);
+    }
+    .estado-tela .icone { font-size: 52px; }
+    .estado-tela p { font-size: 15px; }
+    .spinner {
+      width: 38px; height: 38px;
+      border: 4px solid var(--cinza-borda);
+      border-top-color: var(--azul);
+      border-radius: 50%;
+      animation: girar 0.7s linear infinite;
+    }
+
+    /* Grupo por agente */
+    .grupo-agente { margin-bottom: 30px; }
+    .grupo-titulo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--cinza-borda);
+    }
+    .grupo-titulo .nome-agente {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--azul);
+    }
+    .grupo-titulo .badge-agente {
+      background: var(--azul);
+      color: var(--branco);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 9px;
+      border-radius: 20px;
+    }
+
+    /* Tabela */
+    .tabela-wrap {
+      background: var(--branco);
+      border-radius: 10px;
+      box-shadow: var(--sombra-card);
+      overflow: hidden;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+    }
+    thead tr {
+      background: var(--azul);
+      color: var(--branco);
+    }
+    thead th {
+      padding: 11px 14px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+    tbody tr {
+      border-bottom: 1px solid var(--cinza-borda);
+      transition: background 0.12s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #EEF4FF; }
+    tbody td { padding: 10px 14px; color: var(--texto); vertical-align: middle; }
+
+    .tag-tipo {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+    .tag-rf { background: #FFF3E0; color: #E65100; }
+    .tag-cf { background: #FCE4EC; color: #AD1457; }
+
+    .dias-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+    .dias-urgente { background: #FFEBEE; color: var(--vermelho); }
+    .dias-atencao { background: #FFF8E1; color: #F57F17; }
+    .dias-ok { background: #E8F5E9; color: var(--verde); }
+
+    .btn-recuperar {
+      background: var(--laranja);
+      color: var(--branco);
+      border: none;
+      border-radius: 6px;
+      padding: 7px 14px;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: background 0.15s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .btn-recuperar:hover { background: var(--laranja-hover); transform: scale(1.03); }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.aberto { display: flex; }
+    .modal {
+      background: var(--branco);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      width: 90%;
+      max-width: 480px;
+      padding: 28px;
+      animation: slideUp 0.22s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(24px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    .modal h2 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--azul);
+      margin-bottom: 6px;
+    }
+    .modal .subtitulo {
+      font-size: 13px;
+      color: var(--texto-leve);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    .modal-info {
+      background: var(--cinza-bg);
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      font-size: 13.5px;
+      line-height: 1.8;
+    }
+    .modal-info strong { color: var(--azul); }
+    .modal-aviso {
+      background: #FFF8E1;
+      border-left: 4px solid var(--laranja);
+      border-radius: 4px;
+      padding: 10px 14px;
+      font-size: 12.5px;
+      color: #5D4037;
+      margin-bottom: 22px;
+      line-height: 1.5;
+    }
+    .modal-btns {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    .btn-cancelar {
+      background: none;
+      border: 1.5px solid var(--cinza-borda);
+      border-radius: 6px;
+      padding: 9px 18px;
+      font-size: 13.5px;
+      cursor: pointer;
+      color: var(--texto-leve);
+      transition: border-color 0.15s;
+    }
+    .btn-cancelar:hover { border-color: var(--azul-claro); }
+    .btn-confirmar {
+      background: var(--laranja);
+      color: var(--branco);
+      border: none;
+      border-radius: 6px;
+      padding: 9px 20px;
+      font-size: 13.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-confirmar:hover { background: var(--laranja-hover); }
+
+    /* Responsive */
+    @media (max-width: 700px) {
+      #sidebar { transform: translateX(-240px); }
+      #sidebar.aberto-mobile { transform: translateX(0); }
+      #main { margin-left: 0; }
+      .btn-toggle-sidebar { display: block; }
+      .filtros-wrap { padding: 14px 14px 4px; gap: 8px; }
+      .conteudo { padding: 10px 14px 40px; }
+      .topbar { padding: 0 14px; }
+      thead th:nth-child(4),
+      tbody td:nth-child(4) { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="sidebar hidden" id="sidebar">
+    <h4>Menu</h4>
+    <a href="turno.html" style="color: white;">🕒 TURNO DIÁRIO</a>
+    <a href="ficha-registro.html">🏠 CAMPO</a>
+    <a href="historico.html">📋 HISTÓRICO</a>
+    <a href="pendentes.html">📋 PENDENTES</a>
+    <a href="tabela-registros.html">📝 TABELA REGISTROS</a>
+    <a href="pendentes.html">⏳ PENDENTES</a>
+    <a href="ficha-recuperacao.html">📂 RECUPERAÇÃO</a>
+    <a href="tabela-recuperacao.html">📂 TABELA REGISTROS RECUPERAÇÃO</a>
+    <a href="resumo_campo.html">📊 RESUMO</a>
+    <a href="#" class="logout">🚪 Sair</a>
+  </nav>
+<!-- SIDEBAR -->
+<aside id="sidebar">
+  <div class="sidebar-header">
+    <button class="btn-menu" onclick="toggleSidebar()" title="Fechar menu">☰</button>
+    <span>Menu</span>
+  </div>
+  <nav>
+    <a href="#" class="icon" onclick="navegar('turno')">
+      <span class="icon">🕐</span> Turno Diário
+    </a>
+    <a href="#" onclick="navegar('campo')">
+      <span class="icon">🏠</span> Campo
+    </a>
+    <a href="#" onclick="navegar('historico')">
+      <span class="icon">📋</span> Histórico
+    </a>
+    <a href="#" onclick="navegar('tabela')">
+      <span class="icon">📄</span> Tabela Registros
+    </a>
+    <a href="#" onclick="navegar('recuperacao')">
+      <span class="icon">📁</span> Recuperação
+    </a>
+    <a href="#" onclick="navegar('tabela-recuperacao')">
+      <span class="icon">📁</span> Tabela Registros Recuperação
+    </a>
+    <a href="pendentes.html" class="ativo">
+      <span class="icon">⏳</span> Pendentes
+    </a>
+    <a href="#" onclick="navegar('resumo')">
+      <span class="icon">📊</span> Resumo
+    </a>
+  </nav>
+</aside>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-esq">
+      <button class="btn-toggle-sidebar" onclick="toggleSidebar()">☰</button>
+      <h1>⏳ Imóveis Pendentes</h1>
+      <span class="badge-total" id="badge-total" style="display:none"></span>
+    </div>
+    <div class="topbar-dir">
+      <button class="btn-atualizar" id="btn-atualizar" onclick="carregarPendentes()">
+        <span class="icon-refresh">🔄</span> Atualizar
+      </button>
+    </div>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="filtros-wrap">
+    <div class="filtro-group">
+      <label>Agente</label>
+      <select id="filtro-agente" onchange="aplicarFiltros()">
+        <option value="">Todos os agentes</option>
+      </select>
+    </div>
+    <div class="filtro-group">
+      <label>Tipo</label>
+      <select id="filtro-tipo" onchange="aplicarFiltros()">
+        <option value="">Todos</option>
+        <option value="R-F">R-F (Residencial Fechado)</option>
+        <option value="C-F">C-F (Comercial Fechado)</option>
+      </select>
+    </div>
+    <div class="filtro-group">
+      <label>Buscar endereço</label>
+      <input type="text" id="filtro-busca" placeholder="Logradouro, número..." oninput="aplicarFiltros()" />
+    </div>
+  </div>
+
+  <!-- CONTEÚDO -->
+  <div class="conteudo" id="conteudo">
+    <div class="estado-tela" id="estado-carregando">
+      <div class="spinner"></div>
+      <p>Carregando imóveis pendentes...</p>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMAÇÃO -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h2>🏠 Iniciar Recuperação</h2>
+    <p class="subtitulo">Confirme os dados do imóvel antes de iniciar a visita de recuperação.</p>
+    <div class="modal-info" id="modal-info"></div>
+    <div class="modal-aviso">
+      ⚠️ <strong>Atenção:</strong> Esta visita de recuperação <strong>não será somada</strong> no resumo do dia, pois o imóvel já foi contabilizado no dia do fechamento.
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-confirmar" onclick="confirmarRecuperacao()">Confirmar e Abrir Visita</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── ESTADO GLOBAL ──────────────────────────────────────────────
+let todosOsPendentes = []; // [{ agente, data_turno, horario, logradouro, numero, complemento, tipo_imovel, quarteirao, dias }]
+let imovelSelecionado = null;
+
+// ── INDEXEDDB ──────────────────────────────────────────────────
+function abrirDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('antivetorialDB');
+    req.onsuccess = () => resolve(req.result);
+    req.onerror  = () => reject(req.error);
+  });
+}
+
+function lerTodosRegistros(db) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('registros', 'readonly');
+    const store = tx.objectStore('registros');
+    const req = store.getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror   = () => reject(req.error);
+  });
+}
+
+// ── CHAVE DE ENDEREÇO ──────────────────────────────────────────
+function chaveEndereco(r) {
+  const log  = (r.logradouro  || '').trim().toLowerCase();
+  const num  = (r.numero      || '').trim().toLowerCase();
+  const comp = (r.complemento || '').trim().toLowerCase();
+  return `${log}|${num}|${comp}`;
+}
+
+// ── CALCULAR DIAS EM ABERTO ────────────────────────────────────
+function diasEmAberto(data_turno) {
+  if (!data_turno) return 0;
+  const hoje = new Date();
+  hoje.setHours(0,0,0,0);
+  const dt = new Date(data_turno + 'T00:00:00');
+  return Math.floor((hoje - dt) / 86400000);
+}
+
+// ── LÓGICA PRINCIPAL ───────────────────────────────────────────
+async function carregarPendentes() {
+  const btn = document.getElementById('btn-atualizar');
+  btn.classList.add('girando');
+  mostrarEstado('carregando');
+
+  try {
+    const db = await abrirDB();
+    const registros = await lerTodosRegistros(db);
+
+    // Separar fechados e recuperações
+    // Recuperação = is_recuperacao: true (flag salva pelo campo.js)
+    // Fallback: tipo_imovel sem "-F" com data posterior (compatibilidade com registros antigos)
+    const TIPOS_FECHADO = ['R-F', 'C-F'];
+
+    const fechados    = registros.filter(r => TIPOS_FECHADO.includes((r.tipo_imovel || '').toUpperCase()));
+    const recuperados = registros.filter(r => r.is_recuperacao === true);
+
+    // Indexar recuperações por endereço → lista de datas
+    const mapaRecuperados = {};
+    for (const r of recuperados) {
+      const chave = chaveEndereco(r);
+      if (!mapaRecuperados[chave]) mapaRecuperados[chave] = [];
+      mapaRecuperados[chave].push(r.data_turno || '');
+    }
+
+    // Para cada fechado, verificar se existe recuperação POSTERIOR pelo mesmo endereço
+    const pendentes = [];
+    for (const f of fechados) {
+      const chave = chaveEndereco(f);
+      const dataFechado = f.data_turno || '';
+      const datasRecuperacao = mapaRecuperados[chave] || [];
+      const foiRecuperado = datasRecuperacao.some(d => d > dataFechado);
+      if (!foiRecuperado) {
+        pendentes.push({
+          ...f,
+          dias: diasEmAberto(dataFechado)
+        });
+      }
+    }
+
+    // Ordenar: mais antigos primeiro
+    pendentes.sort((a, b) => (a.data_turno || '') < (b.data_turno || '') ? -1 : 1);
+
+    todosOsPendentes = pendentes;
+    popularFiltroAgente(pendentes);
+    aplicarFiltros();
+
+  } catch (err) {
+    console.error('Erro ao carregar pendentes:', err);
+    mostrarEstado('erro', 'Não foi possível acessar o banco de dados.<br>Verifique se o sistema está aberto corretamente.');
+  } finally {
+    btn.classList.remove('girando');
+  }
+}
+
+// ── FILTROS ────────────────────────────────────────────────────
+function popularFiltroAgente(pendentes) {
+  const agentes = [...new Set(pendentes.map(p => p.agente || p.agenteId || '—'))].sort();
+  const sel = document.getElementById('filtro-agente');
+  const atual = sel.value;
+  sel.innerHTML = '<option value="">Todos os agentes</option>';
+  agentes.forEach(a => {
+    const op = document.createElement('option');
+    op.value = a; op.textContent = a;
+    if (a === atual) op.selected = true;
+    sel.appendChild(op);
+  });
+}
+
+function aplicarFiltros() {
+  const agente = document.getElementById('filtro-agente').value;
+  const tipo   = document.getElementById('filtro-tipo').value;
+  const busca  = document.getElementById('filtro-busca').value.toLowerCase().trim();
+
+  let filtrados = todosOsPendentes;
+
+  if (agente) filtrados = filtrados.filter(p => (p.agente || p.agenteId || '') === agente);
+  if (tipo)   filtrados = filtrados.filter(p => (p.tipo_imovel || '').toUpperCase() === tipo);
+  if (busca)  filtrados = filtrados.filter(p =>
+    (p.logradouro || '').toLowerCase().includes(busca) ||
+    (p.numero     || '').toLowerCase().includes(busca) ||
+    (p.complemento|| '').toLowerCase().includes(busca)
+  );
+
+  renderizarPendentes(filtrados);
+}
+
+// ── RENDER ────────────────────────────────────────────────────
+function renderizarPendentes(pendentes) {
+  const badge = document.getElementById('badge-total');
+  const conteudo = document.getElementById('conteudo');
+
+  if (pendentes.length === 0) {
+    badge.style.display = 'none';
+    mostrarEstado('vazio', 'Nenhum imóvel pendente encontrado.');
+    return;
+  }
+
+  badge.textContent = `${pendentes.length} pendente${pendentes.length !== 1 ? 's' : ''}`;
+  badge.style.display = 'inline-block';
+
+  // Agrupar por agente
+  const grupos = {};
+  for (const p of pendentes) {
+    const chave = p.agente || p.agenteId || '—';
+    if (!grupos[chave]) grupos[chave] = [];
+    grupos[chave].push(p);
+  }
+
+  let html = '';
+  for (const [nomeAgente, itens] of Object.entries(grupos)) {
+    html += `
+      <div class="grupo-agente">
+        <div class="grupo-titulo">
+          <span class="nome-agente">👤 ${nomeAgente}</span>
+          <span class="badge-agente">${itens.length} imóvel${itens.length !== 1 ? 'is' : ''}</span>
+        </div>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Data do Fechamento</th>
+                <th>Logradouro</th>
+                <th>Nº</th>
+                <th>Compl.</th>
+                <th>Quarteirão</th>
+                <th>Tipo</th>
+                <th>Dias em aberto</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itens.map((p, idx) => linhaTabela(p, nomeAgente, idx)).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  conteudo.innerHTML = html;
+}
+
+function linhaTabela(p, agente, idx) {
+  const tipoUpper = (p.tipo_imovel || '').toUpperCase();
+  const tagClasse = tipoUpper === 'R-F' ? 'tag-rf' : 'tag-cf';
+
+  let diasClasse = 'dias-ok';
+  if (p.dias >= 7)      diasClasse = 'dias-urgente';
+  else if (p.dias >= 3) diasClasse = 'dias-atencao';
+
+  const dataFmt = p.data_turno ? p.data_turno.split('-').reverse().join('/') : '—';
+  const dadosJson = encodeURIComponent(JSON.stringify(p));
+
+  return `
+    <tr>
+      <td>${dataFmt}</td>
+      <td><strong>${p.logradouro || '—'}</strong></td>
+      <td>${p.numero || '—'}</td>
+      <td>${p.complemento || '—'}</td>
+      <td>${p.quarteirao || '—'}</td>
+      <td><span class="tag-tipo ${tagClasse}">${tipoUpper}</span></td>
+      <td>
+        <span class="dias-badge ${diasClasse}">
+          ${p.dias === 0 ? 'Hoje' : p.dias === 1 ? '1 dia' : `${p.dias} dias`}
+        </span>
+      </td>
+      <td>
+        <button class="btn-recuperar" onclick="abrirModal('${dadosJson}')">
+          🔓 Recuperar
+        </button>
+      </td>
+    </tr>
+  `;
+}
+
+// ── ESTADOS DA TELA ───────────────────────────────────────────
+function mostrarEstado(tipo, msg) {
+  const badge = document.getElementById('badge-total');
+  const conteudo = document.getElementById('conteudo');
+
+  if (tipo === 'carregando') {
+    badge.style.display = 'none';
+    conteudo.innerHTML = `
+      <div class="estado-tela" id="estado-carregando">
+        <div class="spinner"></div>
+        <p>Carregando imóveis pendentes...</p>
+      </div>`;
+    return;
+  }
+  if (tipo === 'erro') {
+    badge.style.display = 'none';
+    conteudo.innerHTML = `
+      <div class="estado-tela">
+        <div class="icone">⚠️</div>
+        <p>${msg}</p>
+      </div>`;
+    return;
+  }
+  if (tipo === 'vazio') {
+    conteudo.innerHTML = `
+      <div class="estado-tela">
+        <div class="icone">✅</div>
+        <p>${msg || 'Nenhum imóvel pendente!'}</p>
+      </div>`;
+    return;
+  }
+}
+
+// ── MODAL ─────────────────────────────────────────────────────
+function abrirModal(dadosJson) {
+  const p = JSON.parse(decodeURIComponent(dadosJson));
+  imovelSelecionado = p;
+
+  const dataFmt = p.data_turno ? p.data_turno.split('-').reverse().join('/') : '—';
+  const tipoNome = (p.tipo_imovel || '').toUpperCase() === 'R-F' ? 'Residencial Fechado' : 'Comercial Fechado';
+
+  document.getElementById('modal-info').innerHTML = `
+    <strong>Logradouro:</strong> ${p.logradouro || '—'}<br>
+    <strong>Número:</strong> ${p.numero || '—'}<br>
+    <strong>Complemento:</strong> ${p.complemento || '—'}<br>
+    <strong>Quarteirão:</strong> ${p.quarteirao || '—'}<br>
+    <strong>Tipo original:</strong> ${tipoNome}<br>
+    <strong>Data do fechamento:</strong> ${dataFmt}<br>
+    <strong>Dias em aberto:</strong> ${p.dias === 0 ? 'Hoje' : p.dias === 1 ? '1 dia' : `${p.dias} dias`}
+  `;
+
+  document.getElementById('modal-overlay').classList.add('aberto');
+}
+
+function fecharModal() {
+  document.getElementById('modal-overlay').classList.remove('aberto');
+  imovelSelecionado = null;
+}
+
+function confirmarRecuperacao() {
+  if (!imovelSelecionado) return;
+
+  // Salva os dados do imóvel fechado no sessionStorage
+  // O campo.js vai ler isso para pré-preencher e marcar is_recuperacao: true
+  sessionStorage.setItem('recuperacao_imovel', JSON.stringify(imovelSelecionado));
+
+  fecharModal();
+
+  // Redireciona para o formulário de campo no modo recuperação
+  window.location.href = 'ficha-registro.html?recuperacao=1';
+}
+
+// ── SIDEBAR ───────────────────────────────────────────────────
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const main    = document.getElementById('main');
+  const isMobile = window.innerWidth <= 700;
+  if (isMobile) {
+    sidebar.classList.toggle('aberto-mobile');
+  } else {
+    sidebar.classList.toggle('fechado');
+    main.classList.toggle('expandido');
+  }
+}
+
+function navegar(pagina) {
+  // Adapte conforme o roteamento do seu sistema
+  const rotas = {
+    turno: 'turno.html',
+    campo: 'ficha-registro.html',
+    historico: 'historico.html',
+    tabela: 'tabela_registros.html',
+    recuperacao: 'recuperacao.html',
+    'tabela-recuperacao': 'tabela_recuperacao.html',
+    resumo: 'resumo.html'
+  };
+  if (rotas[pagina]) window.location.href = rotas[pagina];
+}
+
+// Fechar modal ao clicar fora
+document.getElementById('modal-overlay').addEventListener('click', function(e) {
+  if (e.target === this) fecharModal();
+});
+
+// ── INICIALIZAR ───────────────────────────────────────────────
+carregarPendentes();
+</script>
+</body>
+</html>

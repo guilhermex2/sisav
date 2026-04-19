@@ -5,6 +5,7 @@ const FILES_TO_CACHE = [
   "./frontend/html/turno.html",
   "./frontend/html/ficha-registro.html",
   "./frontend/html/historico.html",
+  "./frontend/html/pendentes.html",
   "./frontend/html/ficha-recuperacao.html",
   "./frontend/html/tabela-recuperacao.html",
   "./frontend/html/tabela-registros.html",
