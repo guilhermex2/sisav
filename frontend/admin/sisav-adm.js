@@ -1,3 +1,14 @@
+  // ─── ESTADO GLOBAL ────────────────────────────────────────────────────────────
+  let allFieldData = [];   // todos os registros brutos
+  let homeFiltered = [];
+  let homePage     = 1;
+  const homePerPage = 6;
+
+  let dailyData     = [];
+  let dailyFiltered = [];
+  let dailyPage     = 1;
+  const dailyPerPage = 7;
+  
 addEventListener("DOMContentLoaded", async () => {
 
   // ─── NAV / SIDEBAR ───────────────────────────────────────────────────────────
@@ -86,16 +97,6 @@ addEventListener("DOMContentLoaded", async () => {
     if (weeklySub) weeklySub.textContent = s.subtituloCard;
   }
 
-  // ─── ESTADO GLOBAL ────────────────────────────────────────────────────────────
-  let allFieldData = [];   // todos os registros brutos
-  let homeFiltered = [];
-  let homePage     = 1;
-  const homePerPage = 6;
-
-  let dailyData     = [];
-  let dailyFiltered = [];
-  let dailyPage     = 1;
-  const dailyPerPage = 7;
 
   // ─── CARREGAR DADOS ───────────────────────────────────────────────────────────
   async function carregarVisitas() {

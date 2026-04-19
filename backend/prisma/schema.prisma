@@ -11,6 +11,7 @@ model Agente {
   id        Int      @id @default(autoincrement())
   nome      String   @unique
   password  String
+  role      Role @default(AGENTE)
   createdAt DateTime @default(now())
 
   turnos    Turno[]
@@ -90,7 +91,10 @@ model Visita {
 
   criadoEm       DateTime @default(now())
 }
-
+enum Role {
+  AGENTE
+  COORDENADOR
+}
 enum TipoVisita {
   NORMAL
   R_F
