@@ -172,8 +172,15 @@
         const payload = JSON.parse(atob(data.token.split(".")[1]));
         localStorage.setItem("agenteId", parseInt(payload.agenteId));
         localStorage.setItem("nomeAgente", payload.nome);
+        localStorage.setItem("role", payload.role);
+
         // Redirecionar para o sistema
-        window.location.href = "turno.html";
+        if(payload.role === "COORDENADOR"){
+          window.location.href = "../admin/sisav_adm_v4_spa.html";
+        } else {
+          window.location.href = "turno.html";
+        }
+       
 
       } catch (error) {
         errorMsg.textContent = "E-mail ou senha inválidos.";
