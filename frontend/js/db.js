@@ -20,9 +20,17 @@ db.version(2).stores({
   recuperacao: "++id, data_turno"
 });
 
-// ✅ Nova versão com chave composta
+// Versão com chave composta
 db.version(3).stores({
   turnos: "[data+agenteId], finalizadoEm, municipio, ciclo, localidade, categoria_localidade, zona, atividade, agente, agenteId",
   registros: "++id, data_turno",
   recuperacao: "++id, data_turno"
+});
+
+//  Versão 4 — adiciona fila de sincronização (não altera stores existentes)
+db.version(4).stores({
+  turnos: "[data+agenteId], finalizadoEm, municipio, ciclo, localidade, categoria_localidade, zona, atividade, agente, agenteId",
+  registros: "++id, data_turno",
+  recuperacao: "++id, data_turno",
+  sync_fila: "++id, tabela, synced, criadoEm"
 });
