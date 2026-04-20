@@ -125,7 +125,6 @@ async function carregarHistorico() {
         alert("Erro ao gerar PDF.");
       }
     });
-
     lista.appendChild(card);
   });
 }
@@ -200,21 +199,35 @@ async function enviarParaAPI(turno, registros) {
 // ==============================================================
 async function gerarPDF(turno, resumo, registros) {
   const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF();
+  const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  const W = pdf.internal.pageSize.getWidth(); // 297mm
 
-  pdf.setFontSize(14);
-  pdf.text("SISAV - Relatório Diário de Campo", 14, 15);
+  // ── Cabeçalho ──────────────────────────────────────────────
+  pdf.setFillColor(33, 37, 41);
+  pdf.rect(0, 0, W, 22, "F");
 
-  pdf.setFontSize(10);
-  pdf.text(`Data: ${new Date(turno.data).toLocaleDateString("pt-BR")}`, 14, 25);
-  pdf.text(`Município: ${turno.municipio || "Não informado"}`, 14, 32);
-  pdf.text(`Localidade: ${turno.localidade || "Não informado"}`, 14, 39);
-  pdf.text(`Agente: ${turno.nomeAgente || turno.agente}`, 14, 46);
-  pdf.text("Resumo do Turno", 14, 52);
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFontSize(13);
+  pdf.setFont("helvetica", "bold");
+  pdf.text("SISAV — Relatório Diário de Campo", 14, 10);
+
+  pdf.setFontSize(8);
+  pdf.setFont("helvetica", "normal");
+  pdf.text(
+    `Data: ${new Date(turno.data).toLocaleDateString("pt-BR")}   |   Município: ${turno.municipio || "—"}   |   Localidade: ${turno.localidade || "—"}   |   Agente: ${turno.nomeAgente || turno.agente || "—"}`,
+    14, 17
+  );
+
+  pdf.setTextColor(0, 0, 0);
+
+  // ── Resumo ─────────────────────────────────────────────────
+  pdf.setFontSize(9);
+  pdf.setFont("helvetica", "bold");
+  pdf.text("Resumo do Turno", 14, 30);
 
   pdf.autoTable({
-    startY: 57,
-    head: [["Indicador", "Quantidade"]],
+    startY: 33,
+    head: [["Indicador", "Qtd."]],
     body: [
       ["Imóveis Inspecionados", resumo.inspecionados ?? 0],
       ["Focos Encontrados",     resumo.focos         ?? 0],
@@ -223,13 +236,93 @@ async function gerarPDF(turno, resumo, registros) {
       ["Imóveis Recuperados",   resumo.recuperados   ?? 0],
       ["Depósitos Eliminados",  resumo.depositos     ?? 0],
     ],
+    tableWidth: 90,
+    styles: { fontSize: 8, cellPadding: 2.5 },
+    headStyles: { fillColor: [79, 110, 247], fontStyle: "bold", textColor: 255 },
+    alternateRowStyles: { fillColor: [245, 247, 255] },
+    columnStyles: {
+      0: { cellWidth: 68 },
+      1: { cellWidth: 22, halign: "center", fontStyle: "bold" },
+    },
   });
 
-  pdf.text(
-    `Total de registros: ${registros.length}`,
-    14,
-    pdf.lastAutoTable.finalY + 10
-  );
+  // ── Registros Detalhados ────────────────────────────────────
+  const afterResumo = pdf.lastAutoTable.finalY + 8;
 
-  pdf.save(`SISAV_${turno.data}_${turno.localidade}.pdf`);
+  pdf.setFontSize(9);
+  pdf.setFont("helvetica", "bold");
+  pdf.text(`Registros Detalhados — ${registros.length} visita(s)`, 14, afterResumo);
+
+  // Colunas: fixas largas + numéricas compactas
+  pdf.autoTable({
+    startY: afterResumo + 4,
+    head: [[
+      "#", "Quarteirão", "Logradouro", "Nº", "Tipo", "Informação", "Horário",
+      "A1", "A2", "B", "C", "D1", "D2", "E", "D.Elim", "D.Trat"
+    ]],
+    body: registros.map((r, i) => [
+      i + 1,
+      r.quarteirao           ?? "-",
+      r.logradouro           || "-",
+      r.numero               || "-",
+      r.tipo_imovel          || "-",
+      r.informacao           || "-",
+      r.horario_entrada      || "-",
+      r.a1                   ?? "-",
+      r.a2                   ?? "-",
+      r.b                    ?? "-",
+      r.c                    ?? "-",
+      r.d1                   ?? "-",
+      r.d2                   ?? "-",
+      r.e                    ?? "-",
+      r.depositos_eliminados ?? "-",
+      r.qtd_dep_trat         ?? "-",
+    ]),
+    styles: {
+      fontSize: 7,
+      cellPadding: 2,
+      overflow: "ellipsize",      // nunca quebra o header
+      halign: "center",
+    },
+    headStyles: {
+      fillColor: [33, 37, 41],
+      textColor: 255,
+      fontStyle: "bold",
+      fontSize: 7,
+      halign: "center",
+    },
+    alternateRowStyles: { fillColor: [248, 249, 250] },
+    columnStyles: {
+      0:  { cellWidth: 7,  halign: "center" },   // #
+      1:  { cellWidth: 18, halign: "center" },   // Quarteirão
+      2:  { cellWidth: 48, halign: "left"   },   // Logradouro
+      3:  { cellWidth: 12, halign: "center" },   // Nº
+      4:  { cellWidth: 14, halign: "center" },   // Tipo
+      5:  { cellWidth: 38, halign: "left"   },   // Informação
+      6:  { cellWidth: 16, halign: "center" },   // Horário
+      7:  { cellWidth: 9,  halign: "center" },   // A1
+      8:  { cellWidth: 9,  halign: "center" },   // A2
+      9:  { cellWidth: 9,  halign: "center" },   // B
+      10: { cellWidth: 9,  halign: "center" },   // C
+      11: { cellWidth: 9,  halign: "center" },   // D1
+      12: { cellWidth: 9,  halign: "center" },   // D2
+      13: { cellWidth: 9,  halign: "center" },   // E
+      14: { cellWidth: 14, halign: "center" },   // D.Elim
+      15: { cellWidth: 14, halign: "center" },   // D.Trat
+    },
+    // Rodapé com total de páginas
+    didDrawPage: (data) => {
+      const pageCount = pdf.internal.getNumberOfPages();
+      pdf.setFontSize(7);
+      pdf.setTextColor(150);
+      pdf.text(
+        `Página ${data.pageNumber} de ${pageCount}`,
+        W - 14, pdf.internal.pageSize.getHeight() - 5,
+        { align: "right" }
+      );
+      pdf.setTextColor(0);
+    },
+  });
+
+  pdf.save(`SISAV_${turno.data}_${turno.localidade || "relatorio"}.pdf`);
 }

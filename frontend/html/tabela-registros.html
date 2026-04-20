@@ -226,26 +226,20 @@
     <div class="sb-header">
       <div class="sb-logo"><!-- ícone ou logo --></div>
       <div>
-        <div class="sb-title">Sistema de Campo</div>
-        <div class="sb-subtitle">Painel principal</div>
+        <div class="sb-title">SISAV</div>
+        <div class="sb-subtitle">Sistema de Campo</div>
       </div>
       <button class="sb-close" id="sbClose">✕</button>
     </div>
 
     <nav class="sb-nav">
       <div class="sb-section">Principal</div>
-      <a class="sb-link active" href="turno.html"><span class="sb-icon">🕒</span> Turno diário <span class="sb-badge">Hoje</span></a>
-      <a class="sb-link" href="ficha-registro.html"><span class="sb-icon">🏠</span> Campo</a>
-      <a class="sb-link" href="resumo_campo.html"><span class="sb-icon">📊</span> Resumo</a>
-
-      <div class="sb-section">Registros</div>
-      <a class="sb-link" href="historico.html"><span class="sb-icon">📋</span> Histórico</a>
-      <a class="sb-link" href="pendentes.html"><span class="sb-icon">⏳</span> Pendentes</a>
+      <a class="sb-link" href="turno.html"><span class="sb-icon">🕒</span> Turno diário</a>
+      <a class="sb-link" href="campo.html"><span class="sb-icon">🏠</span> Campo</a>
       <a class="sb-link" href="tabela-registros.html"><span class="sb-icon">📝</span> Tabela de registros</a>
-
-      <div class="sb-section">Recuperação</div>
-      <a class="sb-link" href="ficha-recuperacao.html"><span class="sb-icon">📂</span> Ficha de recuperação</a>
-      <a class="sb-link" href="tabela-recuperacao.html"><span class="sb-icon">📂</span> Tabela de recuperação</a>
+      <a class="sb-link" href="pendentes.html"><span class="sb-icon">⏳</span> Pendentes</a>
+      <a class="sb-link" href="resumo_campo.html"><span class="sb-icon">📊</span> Resumo</a>
+      <a class="sb-link" href="historico.html"><span class="sb-icon">📋</span> Histórico</a>
     </nav>
 
     <div class="sb-divider"></div>
@@ -253,6 +247,8 @@
       <button class="sb-logout logout"><span class="sb-icon">🚪</span> Sair</button>
     </div>
   </nav>
+
+  <div class="overlay" id="overlay"></div>
 
   <h1>Tabela de Registros</h1>
 
@@ -319,9 +315,15 @@
   overlay.addEventListener('click', closeMenu);
   document.getElementById('sbClose').addEventListener('click', closeMenu);
 
+  function logout() {
+    localStorage.clear();
+    window.location.href = 'login.html';
+  }
   document.querySelector('.logout').addEventListener('click', () => {
-    // TODO: limpar localStorage/IndexedDB e redirecionar
-    console.log('Logout acionado');
+    setTimeout(() => {
+      logout();
+    }, 2000);
+
   });
   </script>
 </body>

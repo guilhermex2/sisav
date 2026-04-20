@@ -9,9 +9,16 @@ no script.
 import { db } from "./db.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    alert("Usuário não autenticado.");
+    window.location.href = "login.html";
+  }
+
+
   const turnoLogado = localStorage.getItem("turnoAtivo")
   if(turnoLogado){
-    window.location.href = 'ficha-registro.html'
+    window.location.href = 'campo.html'
   }
   const hoje = new Date().toISOString().split("T")[0];
   const agenteId = localStorage.getItem("agenteId");
@@ -55,6 +62,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     alert("Turno salvo com sucesso!");
 
-    window.location.href = "ficha-registro.html";
+    window.location.href = "campo.html";
   });
 });
