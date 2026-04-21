@@ -3,7 +3,7 @@ import { db } from "./db.js";
 import { SyncManager } from "./sync-manager.js";
 
 const sync = new SyncManager({
-  apiUrl:     "https://sua-api.com",  // ← troque pela URL real
+  apiUrl:     "https://sisav-api.onrender.com",
   onSyncOk:   (ids) => console.log(`[Sync] ${ids.length} enviado(s).`),
   onSyncErro: (err) => console.warn("[Sync] Falha:", err.message),
 });
