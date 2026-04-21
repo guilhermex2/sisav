@@ -58,6 +58,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const registro = {
       ...dados,
       data_turno: turnoAtivo.data,
+      agenteId: Number(localStorage.getItem("agenteId")),
       criado_em:  new Date().toISOString(),
     };
 
