@@ -1,7 +1,16 @@
 import { db } from "./db.js";
+import { SyncManager } from "./sync-manager.js";
 
 const LIMITE_DIAS = 1;
 const API_BASE_URL = "https://sisav-api.onrender.com";
+
+// SyncManager para forçar sync dos pendentes antes de finalizar
+const sync = new SyncManager({
+  apiUrl:     API_BASE_URL,
+  endpoint:   "/sync/dados",
+  onSyncErro: (err) => console.warn("[Sync] Falha:", err.message),
+});
+sync.init();
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
@@ -28,7 +37,7 @@ async function limparHistoricoAntigo() {
 }
 
 async function carregarHistorico() {
-  const lista = document.getElementById("listaTurnos");
+  const lista    = document.getElementById("listaTurnos");
   const semDados = document.getElementById("semDados");
 
   const turnos = await db.turnos.where("finalizadoEm").above("").reverse().toArray();
@@ -75,20 +84,39 @@ async function carregarHistorico() {
       </div>
     `;
 
-    // 🔄 Sincronizar
+    // 🔄 Sincronizar manual
     card.querySelector(".btn-sync").addEventListener("click", async (e) => {
       const btn = e.currentTarget;
-      btn.disabled = true;
+      btn.disabled    = true;
       btn.textContent = "Sincronizando...";
 
       try {
-        const registros = await db.registros
-          .where("data_turno")
-          .equals(turno.data)
-          .toArray();
+        // 1️⃣ Verifica conexão antes de tentar
+        if (!navigator.onLine) {
+          throw new Error("Sem conexão com a internet. Tente novamente quando estiver online.")
+        }
 
-        await enviarParaAPI(turno, registros);
+        // 2️⃣ Força o envio de todos os dados pendentes na fila do SyncManager
+        // Isso garante que turno e visitas cheguem ao banco antes do finalizarTurno
+        const pendentes = await db.sync_fila.where("synced").equals(0).toArray();
+        if (pendentes.length > 0) {
+          btn.textContent = `Enviando ${pendentes.length} registro(s)...`;
+          // Aguarda o sync automático processar a fila
+          await new Promise((resolve, reject) => {
+            const original = sync.onSyncOk;
+            sync.onSyncOk = (ids) => {
+              sync.onSyncOk = original;
+              resolve(ids);
+            };
+            sync._sincronizar().catch(reject);
+          });
+        }
 
+        // 3️⃣ Marca o turno como finalizado no banco
+        btn.textContent = "Finalizando no servidor...";
+        await marcarFinalizadoNaBanco(turno);
+
+        // 4️⃣ Marca como sincronizado no IndexedDB
         const sincronizadoEm = new Date().toISOString();
         await db.turnos.update(
           { data: turno.data, agenteId: turno.agenteId },
@@ -96,17 +124,16 @@ async function carregarHistorico() {
         );
 
         btn.textContent = "✔ Sincronizado";
-        btn.className = "btn btn-success btn-sm btn-sync";
+        btn.className   = "btn btn-success btn-sm btn-sync";
 
-        // Atualiza o badge sem recarregar a página
         const badge = card.querySelector(".badge");
-        badge.className = "badge bg-success";
+        badge.className   = "badge bg-success";
         badge.textContent = "✔ Sincronizado";
 
       } catch (err) {
         console.error("Erro ao sincronizar:", err);
         alert(`Erro ao sincronizar:\n\n${err.message}`);
-        btn.disabled = false;
+        btn.disabled    = false;
         btn.textContent = "🔄 Sincronizar";
       }
     });
@@ -125,57 +152,17 @@ async function carregarHistorico() {
         alert("Erro ao gerar PDF.");
       }
     });
+
     lista.appendChild(card);
   });
 }
 
 // ==============================================================
-// 📡 Envio para API (mesma lógica do resumo.js)
+// 📡 Apenas marca finalizadoEm no banco — dados já estão lá
 // ==============================================================
-async function enviarParaAPI(turno, registros) {
+async function marcarFinalizadoNaBanco(turno) {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("Token não encontrado. Faça login novamente.");
-
-  const payload = {
-    turno: {
-      data:                turno.data,
-      municipio:           turno.municipio,
-      ciclo:               turno.ciclo,
-      localidade:          turno.localidade,
-      categoriaLocalidade: turno.categoria_localidade ?? null,
-      zona:                turno.zona                 ?? null,
-      atividade:           turno.atividade            ?? null,
-      agenteId:   parseInt(turno.agenteId, 10) || turno.agente,
-      nomeAgente:          turno.nomeAgente || turno.agente,
-    },
-    registros: registros.map(r => ({
-      quarteirao:          r.quarteirao          ?? null,
-      sequencia:           r.sequencia           ?? null,
-      sequencia2:          r.sequencia2          ?? null,
-      lado:                r.lado                ?? null,
-      tipoImovel:          r.tipo_imovel         ?? null,
-      logradouro:          r.logradouro          ?? null,
-      numero:              r.numero              ?? null,
-      complemento:         r.complemento         ?? null,
-      horarioEntrada:      r.horario_entrada      ?? null,
-      informacao:          r.informacao          ?? null,
-      a1:                  r.a1                  ?? null,
-      a2:                  r.a2                  ?? null,
-      b:                   r.b                   ?? null,
-      c:                   r.c                   ?? null,
-      d1:                  r.d1                  ?? null,
-      d2:                  r.d2                  ?? null,
-      e:                   r.e                   ?? null,
-      inspL1:              r.insp_l1             ?? null,
-      imTrat:              r.im_trat             ?? null,
-      amostraInicial:      r.amostra_inicial     ?? null,
-      amostraFinal:        r.amostra_final       ?? null,
-      qtdDepTrat:          r.qtd_dep_trat        ?? null,
-      depositosEliminados: r.depositos_eliminados ?? null,
-      qtdTubitos:          r.qtd_tubitos         ?? null,
-      quedaGramas:         r.queda_gramas        ?? null,
-    })),
-  };
 
   const response = await fetch(`${API_BASE_URL}/api/turnos/finalizar`, {
     method: "POST",
@@ -183,7 +170,10 @@ async function enviarParaAPI(turno, registros) {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${token}`,
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      agenteId: Number(turno.agenteId),
+      data:     turno.data,
+    }),
   });
 
   if (!response.ok) {
@@ -195,14 +185,13 @@ async function enviarParaAPI(turno, registros) {
 }
 
 // ==============================================================
-// 📄 Geração de PDF (mesma lógica do resumo.js)
+// 📄 Geração de PDF
 // ==============================================================
 async function gerarPDF(turno, resumo, registros) {
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-  const W = pdf.internal.pageSize.getWidth(); // 297mm
+  const W = pdf.internal.pageSize.getWidth();
 
-  // ── Cabeçalho ──────────────────────────────────────────────
   pdf.setFillColor(33, 37, 41);
   pdf.rect(0, 0, W, 22, "F");
 
@@ -220,7 +209,6 @@ async function gerarPDF(turno, resumo, registros) {
 
   pdf.setTextColor(0, 0, 0);
 
-  // ── Resumo ─────────────────────────────────────────────────
   pdf.setFontSize(9);
   pdf.setFont("helvetica", "bold");
   pdf.text("Resumo do Turno", 14, 30);
@@ -246,14 +234,12 @@ async function gerarPDF(turno, resumo, registros) {
     },
   });
 
-  // ── Registros Detalhados ────────────────────────────────────
   const afterResumo = pdf.lastAutoTable.finalY + 8;
 
   pdf.setFontSize(9);
   pdf.setFont("helvetica", "bold");
   pdf.text(`Registros Detalhados — ${registros.length} visita(s)`, 14, afterResumo);
 
-  // Colunas: fixas largas + numéricas compactas
   pdf.autoTable({
     startY: afterResumo + 4,
     head: [[
@@ -278,39 +264,27 @@ async function gerarPDF(turno, resumo, registros) {
       r.depositos_eliminados ?? "-",
       r.qtd_dep_trat         ?? "-",
     ]),
-    styles: {
-      fontSize: 7,
-      cellPadding: 2,
-      overflow: "ellipsize",      // nunca quebra o header
-      halign: "center",
-    },
-    headStyles: {
-      fillColor: [33, 37, 41],
-      textColor: 255,
-      fontStyle: "bold",
-      fontSize: 7,
-      halign: "center",
-    },
+    styles: { fontSize: 7, cellPadding: 2, overflow: "ellipsize", halign: "center" },
+    headStyles: { fillColor: [33, 37, 41], textColor: 255, fontStyle: "bold", fontSize: 7, halign: "center" },
     alternateRowStyles: { fillColor: [248, 249, 250] },
     columnStyles: {
-      0:  { cellWidth: 7,  halign: "center" },   // #
-      1:  { cellWidth: 18, halign: "center" },   // Quarteirão
-      2:  { cellWidth: 48, halign: "left"   },   // Logradouro
-      3:  { cellWidth: 12, halign: "center" },   // Nº
-      4:  { cellWidth: 14, halign: "center" },   // Tipo
-      5:  { cellWidth: 38, halign: "left"   },   // Informação
-      6:  { cellWidth: 16, halign: "center" },   // Horário
-      7:  { cellWidth: 9,  halign: "center" },   // A1
-      8:  { cellWidth: 9,  halign: "center" },   // A2
-      9:  { cellWidth: 9,  halign: "center" },   // B
-      10: { cellWidth: 9,  halign: "center" },   // C
-      11: { cellWidth: 9,  halign: "center" },   // D1
-      12: { cellWidth: 9,  halign: "center" },   // D2
-      13: { cellWidth: 9,  halign: "center" },   // E
-      14: { cellWidth: 14, halign: "center" },   // D.Elim
-      15: { cellWidth: 14, halign: "center" },   // D.Trat
+      0:  { cellWidth: 7,  halign: "center" },
+      1:  { cellWidth: 18, halign: "center" },
+      2:  { cellWidth: 48, halign: "left"   },
+      3:  { cellWidth: 12, halign: "center" },
+      4:  { cellWidth: 14, halign: "center" },
+      5:  { cellWidth: 38, halign: "left"   },
+      6:  { cellWidth: 16, halign: "center" },
+      7:  { cellWidth: 9,  halign: "center" },
+      8:  { cellWidth: 9,  halign: "center" },
+      9:  { cellWidth: 9,  halign: "center" },
+      10: { cellWidth: 9,  halign: "center" },
+      11: { cellWidth: 9,  halign: "center" },
+      12: { cellWidth: 9,  halign: "center" },
+      13: { cellWidth: 9,  halign: "center" },
+      14: { cellWidth: 14, halign: "center" },
+      15: { cellWidth: 14, halign: "center" },
     },
-    // Rodapé com total de páginas
     didDrawPage: (data) => {
       const pageCount = pdf.internal.getNumberOfPages();
       pdf.setFontSize(7);

@@ -1,59 +1,18 @@
 import { db } from "../js/db.js";
 
-// ⚙️ Configure aqui quando sua API estiver pronta
 const API_BASE_URL = "https://sisav-api.onrender.com";
 
 // ==============================================================
 // 📡 Função de envio para a API REST
+// Agora apenas marca o turno como finalizado no banco.
+// Turno e visitas já foram salvos pelo sync automático.
 // ==============================================================
-async function enviarParaAPI(turno, registros) {
+async function enviarParaAPI(turno) {
   const token = localStorage.getItem("token");
 
   if (!token) {
     throw new Error("Token de autenticação não encontrado. Faça login novamente.");
   }
-
-  const payload = {
-    turno: {
-      data:                turno.data,
-      municipio:           turno.municipio,
-      ciclo:               turno.ciclo,
-      localidade:          turno.localidade,
-      categoriaLocalidade: turno.categoria_localidade ?? null,
-      zona:                turno.zona                 ?? null,
-      atividade:           turno.atividade            ?? null,
-      agenteId:   parseInt(turno.agenteId, 10)  || turno.agente,
-      nomeAgente:          turno.nomeAgente || turno.agente,
-    },
-    registros: registros.map(r => ({
-      quarteirao:          r.quarteirao          ?? null,
-      sequencia:           r.sequencia           ?? null,
-      sequencia2:          r.sequencia2          ?? null,
-      lado:                r.lado                ?? null,
-      tipoImovel:          r.tipo_imovel         ?? null,
-      logradouro:          r.logradouro          ?? null,
-      numero:              r.numero              ?? null,
-      complemento:         r.complemento         ?? null,
-      horarioEntrada:      r.horario_entrada      ?? null,
-      informacao:          r.informacao          ?? null,
-      a1:                  r.a1                  ?? null,
-      a2:                  r.a2                  ?? null,
-      b:                   r.b                   ?? null,
-      c:                   r.c                   ?? null,
-      d1:                  r.d1                  ?? null,
-      d2:                  r.d2                  ?? null,
-      e:                   r.e                   ?? null,
-      inspL1:              r.insp_l1             ?? null,
-      imTrat:              r.im_trat             ?? null,
-      amostraInicial:      r.amostra_inicial     ?? null,
-      amostraFinal:        r.amostra_final       ?? null,
-      qtdDepTrat:          r.qtd_dep_trat        ?? null,
-      depositosEliminados: r.depositos_eliminados ?? null,
-      qtdTubitos:          r.qtd_tubitos         ?? null,
-      quedaGramas:         r.queda_gramas        ?? null,
-      isRecuperacao:       r.is_recuperacao      ?? false, // ✅ informa a API se é recuperação
-    })),
-  };
 
   const response = await fetch(`${API_BASE_URL}/api/turnos/finalizar`, {
     method: "POST",
@@ -61,7 +20,10 @@ async function enviarParaAPI(turno, registros) {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${token}`,
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      agenteId: Number(turno.agenteId),
+      data:     turno.data,
+    }),
   });
 
   if (!response.ok) {
@@ -105,23 +67,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     elData.textContent   = new Date(turno.data).toLocaleDateString("pt-BR");
     elBairro.textContent = turno.localidade || "Não informado";
 
-    // ✅ Busca todos os registros do dia
     const todosRegistros = await db.registros
       .where("data_turno")
       .equals(turno.data)
       .toArray();
 
-    // ✅ Separa registros normais de recuperações
-    // Recuperações têm is_recuperacao: true e NÃO entram na soma do dia
     const registros    = todosRegistros.filter(r => !r.is_recuperacao);
     const recuperacoes = todosRegistros.filter(r =>  r.is_recuperacao);
 
-    // 🔹 Calcular resumo apenas com registros normais
     const resumo = {
-      inspecionados: registros.length,    // ✅ sem recuperações
+      inspecionados: registros.length,
       focos:         0,
       fechados:      0,
-      recuperados:   recuperacoes.length, // ✅ recuperações do dia via campo.js
+      recuperados:   recuperacoes.length,
       tratamentos:   0,
       depositos:     0,
     };
@@ -169,23 +127,19 @@ document.addEventListener("DOMContentLoaded", async () => {
       try {
         // 1️⃣ Marca como finalizado no IndexedDB
         const finalizadoEm = new Date().toISOString();
-        await db.turnos.update({ data: turno.data, agenteId: turno.agenteId }, { finalizadoEm, resumo });
+        await db.turnos.update(
+          { data: turno.data, agenteId: turno.agenteId },
+          { finalizadoEm, resumo }
+        );
         turno.finalizadoEm = finalizadoEm;
 
-        // 2️⃣ Envia para a API (todos os registros, inclusive recuperações com a flag)
+        // 2️⃣ Apenas avisa o servidor para marcar finalizadoEm no banco
+        // Turno e visitas já foram sincronizados automaticamente durante o dia
         try {
-          await enviarParaAPI(turno, todosRegistros);
-
-          // ✅ Marca como sincronizado no IndexedDB
-          const sincronizadoEm = new Date().toISOString();
-          await db.turnos.update(
-            { data: turno.data, agenteId: turno.agenteId },
-            { sincronizadoEm }
-          );
-
-          console.log("✅ Dados enviados para a API com sucesso.");
+          await enviarParaAPI(turno);
+          console.log("✅ Turno finalizado na API com sucesso.");
         } catch (erroAPI) {
-          console.error("⚠️ Erro ao enviar para API:", erroAPI);
+          console.error("⚠️ Erro ao finalizar na API:", erroAPI);
           alert(
             `Turno finalizado localmente, mas houve um erro ao sincronizar:\n\n${erroAPI.message}\n\nOs dados estão salvos no dispositivo.`
           );

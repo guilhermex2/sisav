@@ -34,6 +34,7 @@ model Turno {
   nomeAgente           String
   
   createdAt            DateTime @default(now())
+  finalizadoEm         DateTime?
 
   visitas              Visita[]
 }
