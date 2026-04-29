@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "app.vercel.sisav.twa",
+    "sha256_cert_fingerprints": [
+      "1E:A0:1D:CC:4F:3C:A3:1E:0E:57:0D:3D:53:2C:73:74:EB:02:17:22:DA:7B:4D:3A:C3:DD:81:E4:6B:CC:2C:F3"
+    ]
+  }
+}]
