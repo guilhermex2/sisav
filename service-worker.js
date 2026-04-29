@@ -1,4 +1,4 @@
-const CACHE_NAME = "sisav-v1";
+const CACHE_NAME = "sisav-v2";
 
 const FILES_TO_CACHE = [
   "./frontend/html/login.html",
@@ -60,22 +60,42 @@ self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
 
   event.respondWith(
-    caches.match(event.request).then(response => {
-      // 1️⃣ Cache primeiro
-      if (response) return response;
 
-      // 2️⃣ Rede + cache dinâmico
-      return fetch(event.request).then(networkResponse => {
-        return caches.open(CACHE_NAME).then(cache => {
-          cache.put(event.request, networkResponse.clone());
-          return networkResponse;
-        });
+  fetch(event.request)
+    .then(networkResponse => {
+
+      // salva nova versão no cache
+      return caches.open(CACHE_NAME).then(cache => {
+
+        cache.put(event.request, networkResponse.clone());
+
+        return networkResponse;
+
       });
-    }).catch(() => {
-      // 3️⃣ Offline total → fallback
-      if (event.request.mode === "navigate") {
-        return caches.match("/sisav/frontend/html/login.html");
-      }
+
     })
-  );
+    .catch(() => {
+
+      // sem internet → tenta cache
+      return caches.match(event.request)
+        .then(cachedResponse => {
+
+          // encontrou no cache
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+
+          // fallback offline
+          if (event.request.mode === "navigate") {
+            return caches.match("/sisav/frontend/html/login.html");
+          }
+
+        });
+
+    })
+
+);
 });
+
+///sisav/frontend/html/login.html
+
