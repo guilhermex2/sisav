@@ -1,4 +1,4 @@
-// campo.js
+// registros.js  (campo.js)
 import { db } from "./db.js";
 import { SyncManager } from "./sync-manager.js";
 
@@ -58,16 +58,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     const registro = {
       ...dados,
       data_turno: turnoAtivo.data,
-      agenteId: Number(localStorage.getItem("agenteId")),
+      agenteId:   Number(localStorage.getItem("agenteId")),
       criado_em:  new Date().toISOString(),
     };
 
     if (modoRecuperacao && dadosPendente) {
-      registro.is_recuperacao = true;
+      registro.is_recuperacao   = true;
+      // Guarda referência ao registro original fechado para atualização
+      registro.recuperacao_ref  = dadosPendente.id ?? null;
+      registro.recuperacao_data = dadosPendente.data_turno ?? null;
       sessionStorage.removeItem("recuperacao_imovel");
 
-      // Recuperação vai para a store própria
+      // FIX 3: Salva na store "recuperacao" E atualiza flag no registro original
       await sync.salvarRecuperacao(registro);
+
+      // Se o registro original existe no IndexedDB, marca como recuperado
+      if (dadosPendente.id) {
+        await db.registros.update(dadosPendente.id, {
+          recuperado:    true,
+          recuperado_em: new Date().toISOString(),
+        });
+      }
 
       alert("Recuperação registrada com sucesso!\nEste imóvel foi removido da lista de pendentes.");
       window.location.href = "pendentes.html";
@@ -77,7 +88,21 @@ document.addEventListener("DOMContentLoaded", async () => {
       await sync.salvarRegistro(registro);
 
       alert("Registro salvo com sucesso!");
+
+      // FIX 1: Reset completo do formulário E disparo do evento change
+      // para que atualizarTipo() desbloqueie o bloco de vistoria
       form.reset();
+
+      // Dispara change no select de tipo para sincronizar estado visual
+      const tipoSelect = document.getElementById("tipoImovel");
+      if (tipoSelect) {
+        tipoSelect.dispatchEvent(new Event("change"));
+      }
+      // Dispara input nos campos de tubitos para limpar preview
+      ["amIni", "amFim"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.dispatchEvent(new Event("input"));
+      });
     }
   });
 });
