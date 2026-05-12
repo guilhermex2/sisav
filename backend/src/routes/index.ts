@@ -19,5 +19,6 @@ mainRouter.get('/sisav/adm', admController.getCampo)
 mainRouter.get('/sisav/adm/kpis', admController.getKpis)
 mainRouter.get('/sisav/adm/resumo-area', admController.getResumoArea)
 mainRouter.get('/sisav/adm/desempenho-individual', admController.desempenhoSemanal)
+mainRouter.patch('/sisav/adm/visita/:id', autenticarToken, admController.editarVisita)
 
 export default mainRouter

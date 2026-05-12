@@ -21,7 +21,7 @@
     .sidebar.collapsed { width: 52px; }
     .sidebar-top { padding: 14px 12px 10px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.08); }
     .logo-icon { width: 28px; height: 28px; background: #185FA5; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .logo-icon svg { width: 14px; height: 14px; fill: #fff; }
+    .logo-icon svg { width: 14px; height: 14px; fill: none; stroke: #fff; stroke-width: 2; }
     .logo-text { font-size: 14px; font-weight: 700; color: #fff; white-space: nowrap; opacity: 1; transition: opacity 0.2s; }
     .sidebar.collapsed .logo-text { opacity: 0; }
     .toggle-btn { margin-left: auto; background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.5); padding: 4px; border-radius: 5px; flex-shrink: 0; transition: color 0.15s; }
@@ -101,7 +101,7 @@
     .tb-btn.xlsx { border-color: #3B6D11; color: #3B6D11; }
     .tb-btn.xlsx:hover { background: #EAF3DE; }
     .agt-wrap { overflow-x: auto; }
-    .agt-table { width: 100%; border-collapse: collapse; min-width: 1400px; }
+    .agt-table { width: 100%; border-collapse: collapse; min-width: 1500px; }
     .agt-table thead th { font-size: 10px; padding: 8px 10px; }
     .agt-table tbody td { padding: 9px 10px; font-size: 12px; }
     .agt-table td.num, .agt-table th.num { text-align: center; }
@@ -112,6 +112,17 @@
     .pager button { border: 1px solid #e0dfd8; background: #fff; border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; color: #1a1a18; }
     .pager button:hover { background: #f0efe8; }
     .pager button:disabled { opacity: 0.4; cursor: default; }
+
+    /* BOTÃO EDITAR NA TABELA */
+    .btn-edit {
+      font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 5px;
+      border: 1px solid #185FA5; color: #185FA5; background: #E6F1FB;
+      cursor: pointer; white-space: nowrap; transition: background 0.15s;
+    }
+    .btn-edit:hover { background: #d0e8f7; }
+    /* linha editada */
+    tr.row-edited td { background: #FFFBE6 !important; }
+    tr.row-edited { border-left: 3px solid #854F0B; }
 
     /* AGENTES PAGE */
     .page-header { padding: 20px 20px 4px; }
@@ -147,6 +158,187 @@
     .m3 { background: #f0efe8; color: #666; }
     .prog { height: 4px; border-radius: 2px; background: #eee; margin-top: 4px; overflow: hidden; }
     .prog-fill { height: 100%; border-radius: 2px; background: #185FA5; }
+
+    /* ── MODAL DE EDIÇÃO ────────────────────────────────────────────── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(10,25,47,0.55);
+      z-index: 500; align-items: center; justify-content: center;
+      backdrop-filter: blur(2px);
+    }
+    .modal-overlay.open { display: flex; animation: overlayIn 0.2s ease; }
+    @keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal {
+      background: #fff; border-radius: 14px; width: min(780px, 95vw);
+      max-height: 90vh; overflow: hidden; display: flex; flex-direction: column;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.22);
+      animation: modalIn 0.22s cubic-bezier(.4,0,.2,1);
+    }
+    @keyframes modalIn { from { opacity:0; transform: translateY(16px) scale(0.98); } to { opacity:1; transform: none; } }
+
+    .modal-header {
+      padding: 16px 20px; border-bottom: 1px solid #e8e7e0;
+      display: flex; align-items: center; justify-content: space-between;
+      background: linear-gradient(135deg, #0f3d6e 0%, #185FA5 100%);
+      border-radius: 14px 14px 0 0;
+    }
+    .modal-header-left { display: flex; align-items: center; gap: 10px; }
+    .modal-header h3 { font-size: 15px; font-weight: 700; color: #fff; }
+    .modal-header p  { font-size: 11px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+    .modal-close { background: rgba(255,255,255,0.15); border: none; border-radius: 8px; padding: 6px 8px; cursor: pointer; color: #fff; font-size: 16px; line-height: 1; transition: background 0.15s; }
+    .modal-close:hover { background: rgba(255,255,255,0.25); }
+
+    .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+
+    /* seções do modal */
+    .modal-section { margin-bottom: 20px; }
+    .modal-section-title {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+      color: #185FA5; margin-bottom: 10px; padding-bottom: 6px;
+      border-bottom: 1px solid #e6f1fb;
+    }
+    .modal-grid { display: grid; gap: 10px; }
+    .modal-grid-2 { grid-template-columns: 1fr 1fr; }
+    .modal-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .modal-grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+    .form-field { display: flex; flex-direction: column; gap: 4px; }
+    .form-field label { font-size: 10px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.04em; }
+    .form-field input, .form-field select {
+      font-size: 12px; border: 1px solid #ddd; border-radius: 6px;
+      padding: 7px 9px; background: #fff; color: #1a1a18; outline: none;
+      transition: border-color 0.15s;
+    }
+    .form-field input:focus, .form-field select:focus { border-color: #185FA5; box-shadow: 0 0 0 2px rgba(24,95,165,0.1); }
+    .form-field input[type="number"] { text-align: center; }
+
+    .modal-footer {
+      padding: 14px 20px; border-top: 1px solid #e8e7e0;
+      display: flex; align-items: center; justify-content: space-between;
+      background: #fafaf7;
+    }
+    .modal-footer-note { font-size: 11px; color: #aaa; }
+    .modal-footer-actions { display: flex; gap: 8px; }
+    .btn-cancel { font-size: 13px; font-weight: 500; padding: 8px 16px; border-radius: 7px; border: 1px solid #ddd; background: #fff; color: #555; cursor: pointer; transition: background 0.15s; }
+    .btn-cancel:hover { background: #f0efe8; }
+    .btn-save {
+      font-size: 13px; font-weight: 600; padding: 8px 20px; border-radius: 7px;
+      border: none; background: #185FA5; color: #fff; cursor: pointer;
+      display: flex; align-items: center; gap: 6px; transition: background 0.15s;
+    }
+    .btn-save:hover { background: #0f3d6e; }
+    .btn-save:disabled { opacity: 0.6; cursor: default; }
+    .btn-save .spinner {
+      width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff; border-radius: 50%;
+      animation: spin 0.7s linear infinite; display: none;
+    }
+    .btn-save.loading .spinner { display: block; }
+    .btn-save.loading .save-label { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* toast de feedback */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+      background: #0f3d6e; color: #fff; font-size: 13px; font-weight: 500;
+      padding: 12px 20px; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      transform: translateY(16px); opacity: 0;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+      pointer-events: none;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.error { background: #A32D2D; }
+
+    /* ── RESUMO DO AGENTE ──────────────────────────────────────────── */
+    .resumo-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(10,25,47,0.55);
+      z-index: 600; align-items: center; justify-content: center;
+      backdrop-filter: blur(2px);
+    }
+    .resumo-overlay.open { display: flex; animation: overlayIn 0.2s ease; }
+
+    .resumo-modal {
+      background: #f4f4f0; border-radius: 14px; width: min(700px, 95vw);
+      max-height: 92vh; overflow-y: auto;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.22);
+      animation: modalIn 0.22s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* cabeçalho do resumo */
+    .resumo-header {
+      background: #0f3d6e; border-radius: 14px 14px 0 0;
+      padding: 16px 20px; display: flex; justify-content: space-between; align-items: flex-start;
+    }
+    .resumo-header-left .resumo-supra { font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.5); }
+    .resumo-header-left h2 { font-size: 22px; font-weight: 800; color: #fff; font-style: italic; margin-top: 2px; }
+    .resumo-status { margin-top: 8px; display: inline-block; font-size: 10px; font-weight: 700; background: #FAEEDA; color: #854F0B; padding: 3px 10px; border-radius: 99px; }
+    .resumo-header-right { text-align: right; font-size: 11px; color: rgba(255,255,255,0.7); line-height: 1.8; }
+    .resumo-header-right strong { color: #fff; font-weight: 700; }
+    .resumo-close-btn { background: rgba(255,255,255,0.15); border: none; border-radius: 8px; padding: 6px 10px; cursor: pointer; color: #fff; font-size: 15px; margin-left: 16px; flex-shrink: 0; }
+    .resumo-close-btn:hover { background: rgba(255,255,255,0.25); }
+
+    .resumo-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+    /* bloco genérico */
+    .r-block { background: #fff; border-radius: 10px; overflow: hidden; border: 1px solid #e0dfd8; }
+    .r-block-head { background: #0f3d6e; padding: 8px 14px; display: flex; align-items: center; gap: 8px; }
+    .r-block-head span { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #fff; }
+    .r-block-body { padding: 12px 14px; }
+
+    /* grid de campos do resumo */
+    .r-grid { display: grid; gap: 8px; }
+    .r-grid-5 { grid-template-columns: repeat(5,1fr); }
+    .r-grid-6 { grid-template-columns: repeat(6,1fr); }
+    .r-grid-8 { grid-template-columns: repeat(8,1fr); }
+    .r-field { display: flex; flex-direction: column; gap: 3px; }
+    .r-field label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em; color: #888; font-weight: 600; }
+    .r-value {
+      border: 1px solid #ddd; border-radius: 6px; padding: 8px 10px;
+      font-size: 14px; font-weight: 600; color: #1a1a18; text-align: center;
+      background: #fafaf7; min-height: 38px; display: flex; align-items: center; justify-content: center;
+    }
+    .r-value.highlight { background: #0f3d6e; color: #fff; border-color: #0f3d6e; font-size: 16px; }
+    .r-value.warn { background: #FAEEDA; color: #854F0B; border-color: #f0c97a; }
+    .r-value.good { background: #EAF3DE; color: #3B6D11; border-color: #b3d97a; }
+
+    /* situação */
+    .situacao-grid { display: grid; grid-template-columns: 1fr 1fr 220px; gap: 10px; align-items: start; }
+    .situacao-sub-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .tubitos-box {
+      background: #0f3d6e; border-radius: 8px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; padding: 12px;
+      text-align: center; min-height: 80px;
+    }
+    .tubitos-num { font-size: 32px; font-weight: 800; color: #fff; line-height: 1; }
+    .tubitos-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.6); margin-top: 3px; }
+    .pendencia-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+    /* depósitos */
+    .dep-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .dep-table th { font-size: 9px; text-transform: uppercase; color: #888; padding: 6px 8px; text-align: left; background: #f7f7f4; border-bottom: 1px solid #eee; }
+    .dep-table td { padding: 8px; border-bottom: 1px solid #f0efe8; font-weight: 600; }
+    .dep-table tr:last-child td { border-bottom: none; }
+
+    /* quarteirões */
+    .q-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; }
+    .q-chip {
+      border: 1px solid #d0e4f7; border-radius: 5px; padding: 5px 4px;
+      font-size: 11px; font-weight: 600; color: #185FA5; background: #E6F1FB;
+      text-align: center; min-width: 0;
+    }
+    .q-chip.concluido { background: #0f3d6e; color: #fff; border-color: #0f3d6e; }
+    .q-empty { border: 1px dashed #ddd; border-radius: 5px; padding: 5px 4px; min-height: 28px; }
+
+    .resumo-print-btn {
+      margin: 0 16px 16px; padding: 10px; background: #0f3d6e; color: #fff;
+      border: none; border-radius: 8px; font-size: 13px; font-weight: 600;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .resumo-print-btn:hover { background: #185FA5; }
+
+    /* botão de resumo na toolbar */
+    .tb-btn.resumo { border-color: #185FA5; color: #185FA5; }
+    .tb-btn.resumo:hover { background: #E6F1FB; }
   </style>
 </head>
 <body>
@@ -155,7 +347,7 @@
   <div class="sidebar" id="sidebar">
     <div class="sidebar-top">
       <div class="logo-icon">
-        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polyline points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
       </div>
       <span class="logo-text">SISAV ADM</span>
       <button class="toggle-btn" onclick="toggleSidebar()" title="Recolher menu">
@@ -186,7 +378,6 @@
     <!-- TOPBAR -->
     <div class="topbar">
       <span class="topbar-title" id="topbar-title">Dashboard</span>
-      <!-- id="week-badge" → atualizado pelo JS -->
       <span class="week-badge" id="week-badge">Carregando...</span>
     </div>
 
@@ -231,7 +422,6 @@
             <div class="card-icon" style="background:#FAEEDA">🏆</div>
             <div>
               <div class="card-title">Desempenho individual</div>
-              <!-- id="mvp-week-sub" → atualizado pelo JS -->
               <div class="card-sub" id="mvp-week-sub">Agentes · semana atual</div>
             </div>
           </div>
@@ -263,12 +453,14 @@
           </select>
           <input class="tb-input" id="h-filter-search" type="text" placeholder="Buscar logradouro..." oninput="homeApplyFilters()">
           <div class="tb-spacer"></div>
+          <button class="tb-btn resumo" onclick="abrirResumoAgente()">📄 Resumo</button>
           <button class="tb-btn pdf" onclick="exportPDF(homeFiltered)">⬇ PDF</button>
           <button class="tb-btn xlsx" onclick="exportXLSX(homeFiltered, 'SISAV_Campo')">⬇ Excel</button>
         </div>
         <div class="agt-wrap">
           <table class="agt-table">
             <thead><tr>
+              <th></th><!-- editar -->
               <th>Data</th><th>Quarteirão</th><th>Lado</th><th>Logradouro</th>
               <th class="num">Nº</th><th class="num">Seq.</th><th>Compl.</th><th>Tipo</th>
               <th>Horário</th><th class="num">Entrada</th>
@@ -340,7 +532,6 @@
       <!-- FECHAMENTO SEMANAL -->
       <div class="section-title-bar" style="margin-top:4px">
         <h3>📊 Fechamento Semanal</h3>
-        <!-- id="weekly-section-sub" → atualizado pelo JS -->
         <span id="weekly-section-sub">Somatória de todos os agentes · carregando...</span>
       </div>
       <div class="weekly-card">
@@ -348,7 +539,6 @@
           <div class="card-icon" style="background:rgba(255,255,255,0.15);font-size:16px">🏁</div>
           <div>
             <div class="card-title">Resumo Semanal Consolidado</div>
-            <!-- id="weekly-card-sub" → atualizado pelo JS -->
             <div class="card-sub" id="weekly-card-sub">Carregando...</div>
           </div>
         </div>
@@ -371,6 +561,162 @@
     </div><!-- /AGENTES PAGE -->
   </div>
 </div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MODAL DE EDIÇÃO DE REGISTRO
+═══════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="edit-overlay" onclick="fecharModal(event)">
+  <div class="modal" id="edit-modal">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <span style="font-size:20px">✏️</span>
+        <div>
+          <h3>Editar Registro de Campo</h3>
+          <p id="modal-subtitle">Imóvel — </p>
+        </div>
+      </div>
+      <button class="modal-close" onclick="fecharModalDireto()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Identificação -->
+      <div class="modal-section">
+        <div class="modal-section-title">📍 Identificação</div>
+        <div class="modal-grid modal-grid-3">
+          <div class="form-field">
+            <label>Data</label>
+            <input type="text" id="f-data" placeholder="DD/MM/AAAA">
+          </div>
+          <div class="form-field">
+            <label>Logradouro</label>
+            <input type="text" id="f-logradouro">
+          </div>
+          <div class="form-field">
+            <label>Número</label>
+            <input type="text" id="f-num">
+          </div>
+          <div class="form-field">
+            <label>Complemento</label>
+            <input type="text" id="f-compl">
+          </div>
+          <div class="form-field">
+            <label>Quarteirão</label>
+            <input type="text" id="f-quarteirao">
+          </div>
+          <div class="form-field">
+            <label>Lado</label>
+            <input type="text" id="f-lado">
+          </div>
+          <div class="form-field">
+            <label>Seq.</label>
+            <input type="number" id="f-seq">
+          </div>
+          <div class="form-field">
+            <label>Tipo</label>
+            <select id="f-tipo">
+              <option value="">—</option>
+              <option>Residência</option>
+              <option>Comércio</option>
+              <option>TB</option>
+              <option>PE</option>
+              <option>Outra</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Horário</label>
+            <input type="text" id="f-horario" placeholder="HH:MM">
+          </div>
+        </div>
+      </div>
+
+      <!-- Entrada / Situação -->
+      <div class="modal-section">
+        <div class="modal-section-title">🚪 Entrada &amp; Situação</div>
+        <div class="modal-grid modal-grid-4">
+          <div class="form-field">
+            <label>Entrada (S/N)</label>
+            <select id="f-entrada">
+              <option value="S">S — Com entrada</option>
+              <option value="N">N — Fechado</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Informação</label>
+            <select id="f-info">
+              <option value="Normal">Normal</option>
+              <option value="Atenção">Atenção</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Depósitos -->
+      <div class="modal-section">
+        <div class="modal-section-title">🪣 Depósitos inspecionados por tipo</div>
+        <div class="modal-grid modal-grid-4">
+          <div class="form-field"><label>A1</label><input type="number" id="f-a1" min="0"></div>
+          <div class="form-field"><label>A2</label><input type="number" id="f-a2" min="0"></div>
+          <div class="form-field"><label>B</label><input type="number" id="f-b" min="0"></div>
+          <div class="form-field"><label>C</label><input type="number" id="f-c" min="0"></div>
+          <div class="form-field"><label>D1</label><input type="number" id="f-d1" min="0"></div>
+          <div class="form-field"><label>D2</label><input type="number" id="f-d2" min="0"></div>
+          <div class="form-field"><label>E</label><input type="number" id="f-e" min="0"></div>
+          <div class="form-field"><label>Eliminados</label><input type="number" id="f-elim" min="0"></div>
+        </div>
+      </div>
+
+      <!-- Amostras / Larvicida -->
+      <div class="modal-section">
+        <div class="modal-section-title">🧪 Amostras &amp; Larvicida</div>
+        <div class="modal-grid modal-grid-4">
+          <div class="form-field"><label>Insp. L1</label><input type="number" id="f-insp" min="0"></div>
+          <div class="form-field"><label>Amostra Ini.</label><input type="number" id="f-amostIni" min="0"></div>
+          <div class="form-field"><label>Amostra Fin.</label><input type="number" id="f-amostFin" min="0"></div>
+          <div class="form-field"><label>Tubitos</label><input type="number" id="f-tubitos" min="0"></div>
+          <div class="form-field"><label>Queda (g)</label><input type="number" id="f-queda" min="0" step="0.1"></div>
+          <div class="form-field"><label>Dep. Tratados</label><input type="number" id="f-depTrat" min="0"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <span class="modal-footer-note" id="modal-edit-note">🔒 Alteração registrada com o usuário Coordenador</span>
+      <div class="modal-footer-actions">
+        <button class="btn-cancel" onclick="fecharModalDireto()">Cancelar</button>
+        <button class="btn-save" id="btn-salvar" onclick="salvarEdicao()">
+          <div class="spinner"></div>
+          <span class="save-label">💾 Salvar alterações</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MODAL RESUMO DO AGENTE
+═══════════════════════════════════════════════════════════════ -->
+<div class="resumo-overlay" id="resumo-overlay" onclick="fecharResumo(event)">
+  <div class="resumo-modal" id="resumo-modal">
+    <div class="resumo-header" id="resumo-header">
+      <div class="resumo-header-left">
+        <div class="resumo-supra">SISAV · Serviço Antivetorial</div>
+        <h2>Resumo do Trabalho de Campo</h2>
+        <span class="resumo-status" id="r-status">● EM ANDAMENTO</span>
+      </div>
+      <div class="resumo-header-right" id="r-header-info"></div>
+      <button class="resumo-close-btn" onclick="fecharResumoDireto()">✕</button>
+    </div>
+
+    <div class="resumo-body" id="resumo-body">
+      <!-- preenchido dinamicamente -->
+    </div>
+
+    <button class="resumo-print-btn" onclick="imprimirResumo()">🖨️ Imprimir / Salvar PDF</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="sisav-adm.js"></script>

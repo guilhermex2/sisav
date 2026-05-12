@@ -56,44 +56,45 @@ export const getCampo = async (req: Request, res: Response) => {
         }
         }) as VisitaComRelacoes[];
     const dados: CampoDTO[] = visitas.map((v) => ({
-  data: v.turno.data.toLocaleDateString("pt-BR"),
-  quarteirao: v.imovel.quarteirao,
-  lado: "-",
-  logradouro: v.imovel.logradouro,
-  num: v.imovel.numero,
-  seq: v.id,
-  compl: v.imovel.complemento || "—",
-  tipo: v.tipoVisita,
+      id: v.id,
+      data: v.turno.data.toLocaleDateString("pt-BR"),
+      quarteirao: v.imovel.quarteirao,
+      lado: "-",
+      logradouro: v.imovel.logradouro,
+      num: v.imovel.numero,
+      seq: v.id,
+      compl: v.imovel.complemento || "—",
+      tipo: v.tipoVisita,
 
-  horario: v.horarioEntrada
-    ? v.horarioEntrada.toLocaleTimeString("pt-BR", {
-        hour: "2-digit",
-        minute: "2-digit"
-      })
-    : "—",
+      horario: v.horarioEntrada
+        ? v.horarioEntrada.toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit"
+          })
+        : "—",
 
-  entrada: v.horarioEntrada ? "S" : "N",
+      entrada: v.horarioEntrada ? "S" : "N",
 
-  a1: v.a1,
-  a2: v.a2,
-  b: v.b,
-  c: v.c,
-  d1: v.d1,
-  d2: v.d2,
-  e: v.e,
+      a1: v.a1,
+      a2: v.a2,
+      b: v.b,
+      c: v.c,
+      d1: v.d1,
+      d2: v.d2,
+      e: v.e,
 
-  elim: v.depositosEliminados,
-  insp: v.inspL1 ? 1 : 0,
+      elim: v.depositosEliminados,
+      insp: v.inspL1 ? 1 : 0,
 
-  amostIni: v.amostraInicial,
-  amostFin: v.amostraFinal,
-  tubitos: v.qtdTubitos,
-  queda: v.quedaGramas,
-  depTrat: v.qtdDepTrat,
+      amostIni: v.amostraInicial,
+      amostFin: v.amostraFinal,
+      tubitos: v.qtdTubitos,
+      queda: v.quedaGramas,
+      depTrat: v.qtdDepTrat,
 
-  info: v.informacao || "Normal",
-  agente: v.agente.nome
-}));
+      info: v.informacao || "Normal",
+      agente: v.agente.nome
+    }));
 
     return res.json(dados);
 
@@ -332,3 +333,104 @@ export const getResumoArea = async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Erro interno" });
   }
 };
+
+
+// recebe o id da Visita e atualiza os campos editáveis pelo coordenador.
+
+// ── NOVA FUNÇÃO: editarVisita ─────────────────────────────────────────────────
+export async function editarVisita(req: Request, res: Response) {
+  const id = Number(req.params.id)
+  if (isNaN(id)) {
+    return res.status(400).json({ erro: 'ID inválido' })
+  }
+
+  // Campos permitidos para edição pelo coordenador.
+  // Mapeamento: chave do body → campo no schema Prisma (model Visita)
+  const {
+    // Imovel (atualizado via update aninhado)
+    quarteirao,
+    logradouro,
+    numero,
+    complemento,
+
+    // Visita direta
+    tipoVisita,      // "NORMAL" | "R_F" | "C_F" | "RECUPERACAO"
+    horarioEntrada,  // string ISO ou null
+    informacao,
+
+    // Depósitos por tipo
+    a1, a2, b, c, d1, d2, e,
+
+    // Larvicida / amostras
+    inspL1,
+    imTrat,
+    amostraInicial,
+    amostraFinal,
+    qtdDepTrat,
+    depositosEliminados,
+    qtdTubitos,
+    quedaGramas,
+  } = req.body
+
+  try {
+    // Busca a visita com imovel para ter o imovelId
+    const visita = await prisma.visita.findUnique({
+      where: { id },
+      include: { imovel: true },
+    })
+
+    if (!visita) {
+      return res.status(404).json({ erro: 'Visita não encontrada' })
+    }
+
+    // ── 1. Atualiza campos do Imóvel (se fornecidos) ───────────────────────────
+    const imovelUpdate: Record<string, unknown> = {}
+    if (quarteirao  !== undefined) imovelUpdate.quarteirao  = quarteirao
+    if (logradouro  !== undefined) imovelUpdate.logradouro  = logradouro
+    if (numero      !== undefined) imovelUpdate.numero      = numero
+    if (complemento !== undefined) imovelUpdate.complemento = complemento
+
+    if (Object.keys(imovelUpdate).length > 0) {
+      await prisma.imovel.update({
+        where: { id: visita.imovelId },
+        data: imovelUpdate,
+      })
+    }
+
+    // ── 2. Atualiza campos da Visita ───────────────────────────────────────────
+    const visitaUpdate: Record<string, unknown> = {}
+
+    if (tipoVisita       !== undefined) visitaUpdate.tipoVisita       = tipoVisita
+    if (horarioEntrada   !== undefined) visitaUpdate.horarioEntrada   = horarioEntrada ? new Date(horarioEntrada) : null
+    if (informacao       !== undefined) visitaUpdate.informacao       = informacao
+
+    if (a1 !== undefined) visitaUpdate.a1 = Number(a1)
+    if (a2 !== undefined) visitaUpdate.a2 = Number(a2)
+    if (b  !== undefined) visitaUpdate.b  = Number(b)
+    if (c  !== undefined) visitaUpdate.c  = Number(c)
+    if (d1 !== undefined) visitaUpdate.d1 = Number(d1)
+    if (d2 !== undefined) visitaUpdate.d2 = Number(d2)
+    if (e  !== undefined) visitaUpdate.e  = Number(e)
+
+    if (inspL1             !== undefined) visitaUpdate.inspL1             = Boolean(inspL1)
+    if (imTrat             !== undefined) visitaUpdate.imTrat             = Boolean(imTrat)
+    if (amostraInicial     !== undefined) visitaUpdate.amostraInicial     = Number(amostraInicial)
+    if (amostraFinal       !== undefined) visitaUpdate.amostraFinal       = Number(amostraFinal)
+    if (qtdDepTrat         !== undefined) visitaUpdate.qtdDepTrat         = Number(qtdDepTrat)
+    if (depositosEliminados!== undefined) visitaUpdate.depositosEliminados= Number(depositosEliminados)
+    if (qtdTubitos         !== undefined) visitaUpdate.qtdTubitos         = Number(qtdTubitos)
+    if (quedaGramas        !== undefined) visitaUpdate.quedaGramas        = Number(quedaGramas)
+
+    const visitaAtualizada = await prisma.visita.update({
+      where: { id },
+      data: visitaUpdate,
+      include: { imovel: true, agente: true, turno: true },
+    })
+
+    return res.json({ sucesso: true, visita: visitaAtualizada })
+
+  } catch (err) {
+    console.error('Erro ao editar visita:', err)
+    return res.status(500).json({ erro: 'Erro interno ao atualizar visita' })
+  }
+}
