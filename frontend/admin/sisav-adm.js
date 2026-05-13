@@ -92,41 +92,38 @@ addEventListener("DOMContentLoaded", async () => {
   }
 
   async function carregarMVPs() {
-  const res  = await fetch("https://sisav-api.onrender.com/sisav/adm/desempenho-individual");
-  const data = await res.json();
-  const rows = Array.isArray(data) ? data : (data.dados || []);
-  if (!rows.length) return;
+    const res  = await fetch("https://sisav-api.onrender.com/sisav/adm/desempenho-individual");
+    const data = await res.json();
+    const rows = Array.isArray(data) ? data : (data.dados || []);
+    if (!rows.length) return;
 
-  const max = rows[0].totalRegistros || 1;
-  const medalhas = ["m1", "m2", "m3"];
+    const max = rows[0].totalRegistros || 1;
+    const medalhas = ["m1", "m2", "m3"];
 
-  document.getElementById("mvp-tbody").innerHTML = rows.map((r, i) => {
-    const pct = Math.round((r.totalRegistros / max) * 100);
-    const medal = i < 3 ? medalhas[i] : null;
-    const medalHtml = medal
-      ? `<div class="medal ${medal}">${i + 1}</div>`
-      : `<div style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#bbb;flex-shrink:0">${i + 1}</div>`;
-    return `<tr>
-      <td><div class="agent-row-inner">
-        ${medalHtml}
-        <div>
-          <div style="font-size:13px;font-weight:500">${r.nome}</div>
-          <div class="prog"><div class="prog-fill" style="width:${pct}%"></div></div>
-        </div>
-      </div></td>
-      <td><strong>${r.totalRegistros}</strong></td>
-    </tr>`;
-  }).join("");
-}
+    document.getElementById("mvp-tbody").innerHTML = rows.map((r, i) => {
+      const pct = Math.round((r.totalRegistros / max) * 100);
+      const medal = i < 3 ? medalhas[i] : null;
+      const medalHtml = medal
+        ? `<div class="medal ${medal}">${i + 1}</div>`
+        : `<div style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#bbb;flex-shrink:0">${i + 1}</div>`;
+      return `<tr>
+        <td><div class="agent-row-inner">
+          ${medalHtml}
+          <div>
+            <div style="font-size:13px;font-weight:500">${r.nome}</div>
+            <div class="prog"><div class="prog-fill" style="width:${pct}%"></div></div>
+          </div>
+        </div></td>
+        <td><strong>${r.totalRegistros}</strong></td>
+      </tr>`;
+    }).join("");
+  }
 
   // ─── HOME TABLE ────────────────────────────────────────────────────────────
-  // [CORREÇÃO 1] popularFiltrosHome agora também popula o filtro de data
   function popularFiltrosHome() {
     const agentes = [...new Set(allFieldData.map(r => r.agente).filter(Boolean))].sort();
     const tipos   = [...new Set(allFieldData.map(r => r.tipo).filter(Boolean))].sort();
-
-    // datas únicas ordenadas do mais recente para o mais antigo
-    const datas = [...new Set(allFieldData.map(r => r.data).filter(d => d && d !== "?"))]
+    const datas   = [...new Set(allFieldData.map(r => r.data).filter(d => d && d !== "?"))]
       .sort((a, b) => parseDateBR(b) - parseDateBR(a));
 
     const selAg   = document.getElementById("h-filter-agente");
@@ -142,7 +139,6 @@ addEventListener("DOMContentLoaded", async () => {
     selTipo.innerHTML = `<option value="">Todos os tipos</option>`   + tipos.map(t   => `<option${t === curTipo ? " selected" : ""}>${t}</option>`).join("");
   }
 
-  // [CORREÇÃO 1] homeApplyFilters agora lê o filtro de data
   window.homeApplyFilters = function () {
     const ag    = document.getElementById("h-filter-agente").value;
     const data  = document.getElementById("h-filter-data").value;
@@ -385,47 +381,71 @@ addEventListener("DOMContentLoaded", async () => {
 
   // ─── RECALCULAR AGENTES ────────────────────────────────────────────────────
   function recalcularAgentes() {
-    populaMVPs();               // [CORREÇÃO 2] todos os agentes no ranking
+    populaMVPs();
     gerarFechamentoDiario(allFieldData);
     gerarFechamentoSemanal(allFieldData);
   }
 
-  // ─── [CORREÇÃO 3] FECHAMENTO DIÁRIO ────────────────────────────────────────
-  // Problema anterior: um agente que trabalhasse em dois momentos distintos do
-  // mesmo dia poderia aparecer duas vezes porque a chave era gerada antes dos
-  // dados locais serem corretamente mesclados.
-  // Solução: a chave de agrupamento é SEMPRE "data|||agente" (normalizado) e
-  // o acúmulo é feito em um único objeto por chave — garantindo UMA linha por
-  // combinação data+agente, independente de quantos registros existam.
+  // ─── FECHAMENTO DIÁRIO ─────────────────────────────────────────────────────
+  // Acumula TODOS os campos da tabela de Registros de Campo, agrupados por
+  // data + agente (uma linha por combinação, sem duplicatas).
   function gerarFechamentoDiario(registros) {
-    // Normaliza a string para evitar duplicatas por espaço ou caixa
     const normalizar = str => (str || "").trim().toLowerCase();
 
     const mapa = {};
     registros.forEach(r => {
       const data   = (r.data   || "?").trim();
       const agente = (r.agente || "Não informado").trim();
-      // chave normalizada → mesmo agente com grafias levemente diferentes são unificados
       const chave  = `${normalizar(data)}|||${normalizar(agente)}`;
 
       if (!mapa[chave]) {
         mapa[chave] = {
           data,
-          agente,           // guarda a versão original (não normalizada) para exibição
+          agente,
           fechados:      0,
           inspecionados: 0,
+          a1:            0,
+          a2:            0,
+          b:             0,
+          c:             0,
+          d1:            0,
+          d2:            0,
+          e:             0,
           eliminados:    0,
-          larvas:        0,
-          recuperados:   0,
+          insp:          0,
+          amostIni:      0,
+          amostFin:      0,
+          larvas:        0,   // tubitos
+          queda:         0,
+          depTrat:       0,
+          recuperados:   0,   // alias de depTrat para manter compatibilidade
         };
       }
 
-      // Acumula os valores numéricos — sem resetar o que já foi contado
-      if (r.entrada === "N") { mapa[chave].fechados      += 1; }
-      else                   { mapa[chave].inspecionados += 1; }
-      mapa[chave].eliminados  += Number(r.elim    || 0);
-      mapa[chave].larvas      += Number(r.tubitos || 0);
-      mapa[chave].recuperados += Number(r.depTrat || 0);
+      const m = mapa[chave];
+
+      // Imóveis fechados vs inspecionados
+      if (r.entrada === "N") { m.fechados      += 1; }
+      else                   { m.inspecionados += 1; }
+
+      // Depósitos por tipo
+      m.a1       += Number(r.a1       || 0);
+      m.a2       += Number(r.a2       || 0);
+      m.b        += Number(r.b        || 0);
+      m.c        += Number(r.c        || 0);
+      m.d1       += Number(r.d1       || 0);
+      m.d2       += Number(r.d2       || 0);
+      m.e        += Number(r.e        || 0);
+
+      // Eliminados / Larvicida / Amostras
+      m.eliminados += Number(r.elim     || 0);
+      m.insp       += Number(r.insp     || 0);
+      m.amostIni   += Number(r.amostIni || 0);
+      m.amostFin   += Number(r.amostFin || 0);
+      m.larvas     += Number(r.tubitos  || 0);
+      m.queda      += Number(r.queda    || 0);
+      m.depTrat    += Number(r.depTrat  || 0);
+      m.recuperados+= Number(r.depTrat  || 0);
     });
 
     dailyData = Object.values(mapa).map(item => {
@@ -534,20 +554,36 @@ addEventListener("DOMContentLoaded", async () => {
     renderDailyTable();
   };
 
+  // ─── RENDER DAILY TABLE ────────────────────────────────────────────────────
+  // Exibe todas as colunas acumuladas (mesma estrutura da tabela de Registros de Campo)
   function renderDailyTable() {
     const start = (dailyPage - 1) * dailyPerPage;
     const slice = dailyFiltered.slice(start, start + dailyPerPage);
     const total = dailyFiltered.length;
+
     document.getElementById("daily-tbody").innerHTML = slice.map(r => `<tr>
       <td>${r.data}</td>
       <td><strong>${r.agente}</strong></td>
       <td class="num">${r.fechados}</td>
       <td class="num">${r.inspecionados}</td>
+      <td class="num">${r.a1}</td>
+      <td class="num">${r.a2}</td>
+      <td class="num">${r.b}</td>
+      <td class="num">${r.c}</td>
+      <td class="num">${r.d1}</td>
+      <td class="num">${r.d2}</td>
+      <td class="num">${r.e}</td>
       <td class="num">${r.eliminados}</td>
+      <td class="num">${r.insp}</td>
+      <td class="num">${r.amostIni}</td>
+      <td class="num">${r.amostFin}</td>
       <td class="num">${r.larvas}</td>
+      <td class="num">${r.queda}</td>
+      <td class="num">${r.depTrat}</td>
       <td class="num">${r.recuperados}</td>
       <td><span class="pill ${r.classe}">${r.status}</span></td>
     </tr>`).join("");
+
     const totalPages = Math.max(1, Math.ceil(total / dailyPerPage));
     document.getElementById("daily-page-info").textContent =
       total === 0 ? "Sem registros" : `${start + 1}-${Math.min(start + dailyPerPage, total)} de ${total}`;
@@ -752,28 +788,68 @@ addEventListener("DOMContentLoaded", async () => {
     win.document.close();
   };
 
+  // ─── EXPORT DAILY XLSX (todas as colunas) ──────────────────────────────────
   window.exportDailyXLSX = function () {
-    const headers = ["Data","Agente","Imoveis Fechados","Imoveis Inspecionados","Depositos Eliminados","Larvas Tratadas","Recuperados","Status"];
-    const rows = dailyFiltered.map(r=>[r.data,r.agente,r.fechados,r.inspecionados,r.eliminados,r.larvas,r.recuperados,r.status]);
-    const ws = XLSX.utils.aoa_to_sheet([headers,...rows]);
+    const headers = [
+      "Data", "Agente",
+      "Im. Fechados", "Im. Inspecionados",
+      "A1", "A2", "B", "C", "D1", "D2", "E",
+      "Dep. Eliminados", "Insp. L1", "Amost. Ini.", "Amost. Fin.",
+      "Tubitos", "Queda (g)", "Dep. Tratados", "Recuperados",
+      "Status"
+    ];
+    const rows = dailyFiltered.map(r => [
+      r.data, r.agente,
+      r.fechados, r.inspecionados,
+      r.a1, r.a2, r.b, r.c, r.d1, r.d2, r.e,
+      r.eliminados, r.insp, r.amostIni, r.amostFin,
+      r.larvas, r.queda, r.depTrat, r.recuperados,
+      r.status
+    ]);
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Fechamento Diario");
     XLSX.writeFile(wb, "SISAV_Fechamento_Diario.xlsx");
   };
 
+  // ─── EXPORT DAILY PDF (todas as colunas) ───────────────────────────────────
   window.exportDailyPDF = function () {
     const win = window.open("", "_blank");
-    const headers = ["Data","Agente","Im. Fechados","Im. Inspecionados","Dep. Eliminados","Larvas Tratadas","Recuperados","Status"];
-    const rows = dailyFiltered.map(r=>[r.data,r.agente,r.fechados,r.inspecionados,r.eliminados,r.larvas,r.recuperados,r.status]);
-    const trs = rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join("")}</tr>`).join("");
+    const headers = [
+      "Data", "Agente",
+      "Fechados", "Inspecionados",
+      "A1", "A2", "B", "C", "D1", "D2", "E",
+      "Eliminados", "Insp. L1", "Amost.Ini", "Amost.Fin",
+      "Tubitos", "Queda(g)", "Dep.Trat.", "Recuperados",
+      "Status"
+    ];
+    const rows = dailyFiltered.map(r => [
+      r.data, r.agente,
+      r.fechados, r.inspecionados,
+      r.a1, r.a2, r.b, r.c, r.d1, r.d2, r.e,
+      r.eliminados, r.insp, r.amostIni, r.amostFin,
+      r.larvas, r.queda, r.depTrat, r.recuperados,
+      r.status
+    ]);
+    const trs = rows.map(r => `<tr>${r.map(c => `<td>${c ?? 0}</td>`).join("")}</tr>`).join("");
     win.document.write(`<!DOCTYPE html><html><head><title>SISAV - Fechamento Diario</title>
-      <style>body{font-family:system-ui,sans-serif;font-size:10px;padding:16px;}
-      h2{font-size:14px;color:#185FA5;margin-bottom:12px;}table{border-collapse:collapse;width:100%;}
-      th{background:#f0f0ee;border:1px solid #ddd;padding:5px 8px;font-size:9px;text-transform:uppercase;}
-      td{border:1px solid #e8e7e0;padding:5px 8px;}@media print{body{padding:0;}}</style></head>
-      <body><h2>SISAV ADM - Fechamento Diario</h2>
-      <p style="font-size:10px;color:#888;margin-bottom:10px;">Gerado em ${new Date().toLocaleString("pt-BR")}</p>
-      <table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join("")}</tr></thead><tbody>${trs}</tbody></table>
+      <style>
+        body{font-family:system-ui,sans-serif;font-size:8px;padding:16px;}
+        h2{font-size:13px;color:#185FA5;margin-bottom:8px;}
+        p{font-size:9px;color:#888;margin-bottom:8px;}
+        table{border-collapse:collapse;width:100%;}
+        th{background:#f0f0ee;border:1px solid #ddd;padding:3px 4px;font-size:7px;text-transform:uppercase;text-align:center;}
+        td{border:1px solid #e8e7e0;padding:3px 4px;text-align:center;}
+        td:nth-child(1),td:nth-child(2){text-align:left;}
+        @media print{body{padding:0;}}
+      </style></head>
+      <body>
+        <h2>SISAV ADM - Fechamento Diario</h2>
+        <p>Gerado em ${new Date().toLocaleString("pt-BR")}</p>
+        <table>
+          <thead><tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr></thead>
+          <tbody>${trs}</tbody>
+        </table>
       <script>window.onload=()=>window.print();<\/script></body></html>`);
     win.document.close();
   };
@@ -782,10 +858,7 @@ addEventListener("DOMContentLoaded", async () => {
   aplicarSemanaUI();
   try { await carregarKpis();       } catch (e) { console.warn("KPIs:", e); }
   try { await carregarResumoArea(); } catch (e) { console.warn("Resumo area:", e); }
-  // [CORREÇÃO 2] populaMVPs() agora é chamado dentro de recalcularAgentes(),
-  // que por sua vez é chamado dentro de carregarVisitas() após os dados chegarem.
-  // Não chamamos mais carregarMVPs() separadamente.
   try { await carregarVisitas();    } catch (e) { console.warn("Visitas:", e); }
-  try { await carregarMVPs(); } catch (e) { console.warn("MVPs:", e); }
-  
+  try { await carregarMVPs();       } catch (e) { console.warn("MVPs:", e); }
+
 });

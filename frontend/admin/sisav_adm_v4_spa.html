@@ -339,6 +339,10 @@
     /* botão de resumo na toolbar */
     .tb-btn.resumo { border-color: #185FA5; color: #185FA5; }
     .tb-btn.resumo:hover { background: #E6F1FB; }
+
+    /* daily table scroll */
+    .daily-wrap { overflow-x: auto; }
+    .daily-table { min-width: 1400px; }
   </style>
 </head>
 <body>
@@ -427,7 +431,6 @@
           </div>
           <table>
             <thead><tr><th>Agente</th><th>Imóveis</th></tr></thead>
-            <!-- [CORREÇÃO 2] tbody agora exibe TODOS os agentes, não apenas top 3 -->
             <tbody id="mvp-tbody">
               <tr><td colspan="2" style="text-align:center;color:#aaa;padding:16px">Carregando...</td></tr>
             </tbody>
@@ -441,7 +444,6 @@
           <div class="card-icon" style="background:#E6F1FB">📋</div>
           <div><div class="card-title">Registros de campo</div><div class="card-sub">Dados detalhados por imóvel</div></div>
         </div>
-        <!-- [CORREÇÃO 1] Toolbar com filtro de data adicionado -->
         <div class="toolbar">
           <span class="tb-label">Filtrar:</span>
           <select class="tb-select" id="h-filter-agente" onchange="homeApplyFilters()">
@@ -512,15 +514,28 @@
           <button class="tb-btn pdf" onclick="exportDailyPDF()">⬇ PDF</button>
           <button class="tb-btn xlsx" onclick="exportDailyXLSX()">⬇ Excel</button>
         </div>
-        <div style="overflow-x:auto">
-          <table>
+        <!-- ► TABELA COM TODAS AS COLUNAS (igual à tabela de Registros de Campo) -->
+        <div class="daily-wrap">
+          <table class="daily-table">
             <thead><tr>
               <th>Data</th>
               <th>Agente</th>
-              <th class="num">Imóveis Fechados</th>
-              <th class="num">Imóveis Inspecionados</th>
-              <th class="num">Depósitos Eliminados</th>
-              <th class="num">Larvas Tratadas</th>
+              <th class="num">Im. Fechados</th>
+              <th class="num">Im. Inspecionados</th>
+              <th class="num">A1</th>
+              <th class="num">A2</th>
+              <th class="num">B</th>
+              <th class="num">C</th>
+              <th class="num">D1</th>
+              <th class="num">D2</th>
+              <th class="num">E</th>
+              <th class="num">Dep. Eliminados</th>
+              <th class="num">Insp. L1</th>
+              <th class="num">Amost. Ini.</th>
+              <th class="num">Amost. Fin.</th>
+              <th class="num">Tubitos</th>
+              <th class="num">Queda (g)</th>
+              <th class="num">Dep. Tratados</th>
               <th class="num">Recuperados</th>
               <th>Status</th>
             </tr></thead>
