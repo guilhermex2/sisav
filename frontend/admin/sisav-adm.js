@@ -381,7 +381,7 @@ addEventListener("DOMContentLoaded", async () => {
 
   // ─── RECALCULAR AGENTES ────────────────────────────────────────────────────
   function recalcularAgentes() {
-    populaMVPs();
+    carregarMVPs().catch(e => console.warn("MVPs:", e));
     gerarFechamentoDiario(allFieldData);
     gerarFechamentoSemanal(allFieldData);
   }
