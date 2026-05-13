@@ -427,6 +427,7 @@
           </div>
           <table>
             <thead><tr><th>Agente</th><th>Imóveis</th></tr></thead>
+            <!-- [CORREÇÃO 2] tbody agora exibe TODOS os agentes, não apenas top 3 -->
             <tbody id="mvp-tbody">
               <tr><td colspan="2" style="text-align:center;color:#aaa;padding:16px">Carregando...</td></tr>
             </tbody>
@@ -440,10 +441,14 @@
           <div class="card-icon" style="background:#E6F1FB">📋</div>
           <div><div class="card-title">Registros de campo</div><div class="card-sub">Dados detalhados por imóvel</div></div>
         </div>
+        <!-- [CORREÇÃO 1] Toolbar com filtro de data adicionado -->
         <div class="toolbar">
           <span class="tb-label">Filtrar:</span>
           <select class="tb-select" id="h-filter-agente" onchange="homeApplyFilters()">
             <option value="">Todos os agentes</option>
+          </select>
+          <select class="tb-select" id="h-filter-data" onchange="homeApplyFilters()">
+            <option value="">Todas as datas</option>
           </select>
           <select class="tb-select" id="h-filter-tipo" onchange="homeApplyFilters()">
             <option value="">Todos os tipos</option>

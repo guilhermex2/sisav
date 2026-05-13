@@ -146,28 +146,48 @@ export const desempenhoSemanal = async (req: Request, res: Response) => {
 
     const { inicio, fim } = getIntervaloSemana(anoNum, semanaNum);
 
-    const visitas = await prisma.visita.findMany({
-      where: {
-        turno: {
-          data: {
-            gte: inicio,
-            lte: fim,
+    // Busca todos os agentes cadastrados e as visitas da semana em paralelo
+    const [todosAgentes, visitas] = await Promise.all([
+      prisma.agente.findMany(),
+      prisma.visita.findMany({
+        where: {
+          turno: {
+            data: {
+              gte: inicio,
+              lte: fim,
+            },
           },
         },
-      },
-      include: {
-        agente: true,
-      },
-    });
+        include: {
+          agente: true,
+        },
+      }),
+    ]);
 
+    // Inicializa o mapa com TODOS os agentes zerados
     const mapa: Record<number, any> = {};
 
+    todosAgentes.forEach(agente => {
+      mapa[agente.id] = {
+        agenteId: agente.id,
+        nome: agente.nome,
+        totalRegistros: 0,
+        inspecionados: 0,
+        fechados: 0,
+        eliminados: 0,
+        tratados: 0,
+        recuperados: 0,
+      };
+    });
+
+    // Acumula as visitas sobre os agentes já existentes no mapa
     visitas.forEach(v => {
+      // Caso o agente da visita não esteja no mapa (segurança)
       if (!mapa[v.agenteId]) {
         mapa[v.agenteId] = {
           agenteId: v.agenteId,
           nome: v.agente.nome,
-          totalRegistros: 0,   // 🔥 PRINCIPAL KPI
+          totalRegistros: 0,
           inspecionados: 0,
           fechados: 0,
           eliminados: 0,
@@ -178,25 +198,21 @@ export const desempenhoSemanal = async (req: Request, res: Response) => {
 
       const ag = mapa[v.agenteId];
 
-      // 🔥 TOTAL DE REGISTROS (o que você quer pro ranking)
       ag.totalRegistros += 1;
+      ag.inspecionados  += 1;
 
-      // mantém os outros dados
-      ag.inspecionados += 1;
-
-      if (v.tipoVisita === "NORMAL") ag.fechados += 1;
+      if (v.tipoVisita === "NORMAL")      ag.fechados    += 1;
       if (v.tipoVisita === "RECUPERACAO") ag.recuperados += 1;
 
       ag.eliminados += v.depositosEliminados || 0;
-      ag.tratados += v.qtdDepTrat || 0;
+      ag.tratados   += v.qtdDepTrat          || 0;
     });
 
-    // 🔥 transforma em array
-    let resultado = Object.values(mapa);
-
-    // 🔥 ORDENA DO MAIOR PARA O MENOR (ranking)
-    resultado = resultado.sort((a: any, b: any) => 
-      b.totalRegistros - a.totalRegistros
+    // Ordena: quem tem mais registros primeiro; empate → alfabético
+    const resultado = Object.values(mapa).sort((a: any, b: any) =>
+      b.totalRegistros !== a.totalRegistros
+        ? b.totalRegistros - a.totalRegistros
+        : a.nome.localeCompare(b.nome, "pt-BR")
     );
 
     res.json({

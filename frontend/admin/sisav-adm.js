@@ -92,47 +92,69 @@ addEventListener("DOMContentLoaded", async () => {
   }
 
   async function carregarMVPs() {
-    const res  = await fetch("https://sisav-api.onrender.com/sisav/adm/desempenho-individual");
-    const data = await res.json();
-    const rows = Array.isArray(data) ? data : (data.dados || []);
-    if (!rows.length) return;
-    const ordenado = [...rows].sort((a, b) => b.totalRegistros - a.totalRegistros);
-    const top3 = ordenado.slice(0, 3);
-    const max  = top3[0].totalRegistros || 1;
-    const medals = ["m1", "m2", "m3"];
-    document.getElementById("mvp-tbody").innerHTML = top3.map((r, i) => {
-      const pct = Math.round((r.totalRegistros / max) * 100);
-      return `<tr>
-        <td><div class="agent-row-inner">
-          <div class="medal ${medals[i]}">${i + 1}</div>
-          <div><div style="font-size:13px;font-weight:500">${r.nome}</div>
-          <div class="prog"><div class="prog-fill" style="width:${pct}%"></div></div></div>
-        </div></td>
-        <td><strong>${r.totalRegistros}</strong></td>
-      </tr>`;
-    }).join("");
-  }
+  const res  = await fetch("https://sisav-api.onrender.com/sisav/adm/desempenho-individual");
+  const data = await res.json();
+  const rows = Array.isArray(data) ? data : (data.dados || []);
+  if (!rows.length) return;
+
+  const max = rows[0].totalRegistros || 1;
+  const medalhas = ["m1", "m2", "m3"];
+
+  document.getElementById("mvp-tbody").innerHTML = rows.map((r, i) => {
+    const pct = Math.round((r.totalRegistros / max) * 100);
+    const medal = i < 3 ? medalhas[i] : null;
+    const medalHtml = medal
+      ? `<div class="medal ${medal}">${i + 1}</div>`
+      : `<div style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#bbb;flex-shrink:0">${i + 1}</div>`;
+    return `<tr>
+      <td><div class="agent-row-inner">
+        ${medalHtml}
+        <div>
+          <div style="font-size:13px;font-weight:500">${r.nome}</div>
+          <div class="prog"><div class="prog-fill" style="width:${pct}%"></div></div>
+        </div>
+      </div></td>
+      <td><strong>${r.totalRegistros}</strong></td>
+    </tr>`;
+  }).join("");
+}
 
   // ─── HOME TABLE ────────────────────────────────────────────────────────────
+  // [CORREÇÃO 1] popularFiltrosHome agora também popula o filtro de data
   function popularFiltrosHome() {
     const agentes = [...new Set(allFieldData.map(r => r.agente).filter(Boolean))].sort();
     const tipos   = [...new Set(allFieldData.map(r => r.tipo).filter(Boolean))].sort();
+
+    // datas únicas ordenadas do mais recente para o mais antigo
+    const datas = [...new Set(allFieldData.map(r => r.data).filter(d => d && d !== "?"))]
+      .sort((a, b) => parseDateBR(b) - parseDateBR(a));
+
     const selAg   = document.getElementById("h-filter-agente");
+    const selData = document.getElementById("h-filter-data");
     const selTipo = document.getElementById("h-filter-tipo");
-    const curAg   = selAg.value, curTipo = selTipo.value;
-    selAg.innerHTML  = `<option value="">Todos os agentes</option>` + agentes.map(a => `<option${a===curAg?" selected":""}>${a}</option>`).join("");
-    selTipo.innerHTML = `<option value="">Todos os tipos</option>` + tipos.map(t => `<option${t===curTipo?" selected":""}>${t}</option>`).join("");
+
+    const curAg   = selAg.value;
+    const curData = selData.value;
+    const curTipo = selTipo.value;
+
+    selAg.innerHTML   = `<option value="">Todos os agentes</option>` + agentes.map(a => `<option${a === curAg   ? " selected" : ""}>${a}</option>`).join("");
+    selData.innerHTML = `<option value="">Todas as datas</option>`   + datas.map(d   => `<option${d === curData ? " selected" : ""}>${d}</option>`).join("");
+    selTipo.innerHTML = `<option value="">Todos os tipos</option>`   + tipos.map(t   => `<option${t === curTipo ? " selected" : ""}>${t}</option>`).join("");
   }
 
+  // [CORREÇÃO 1] homeApplyFilters agora lê o filtro de data
   window.homeApplyFilters = function () {
     const ag    = document.getElementById("h-filter-agente").value;
+    const data  = document.getElementById("h-filter-data").value;
     const tipo  = document.getElementById("h-filter-tipo").value;
     const info  = document.getElementById("h-filter-info").value;
     const busca = document.getElementById("h-filter-search").value.toLowerCase().trim();
+
     homeFiltered = allFieldData.filter(r => {
-      if (ag    && r.agente !== ag)   return false;
-      if (tipo  && r.tipo   !== tipo) return false;
-      if (info  && r.info   !== info) return false;
+      if (ag   && r.agente !== ag)   return false;
+      if (data && r.data   !== data) return false;
+      if (tipo && r.tipo   !== tipo) return false;
+      if (info && r.info   !== info) return false;
       if (busca && !(r.logradouro || "").toLowerCase().includes(busca)) return false;
       return true;
     });
@@ -247,23 +269,15 @@ addEventListener("DOMContentLoaded", async () => {
     const get    = id => document.getElementById(id)?.value.trim() ?? "";
     const getNum = id => { const v = document.getElementById(id)?.value; return v === "" ? null : Number(v); };
 
-    // ── monta payload para a API (campos do schema Prisma) ──────────────────
-    // IMPORTANTE: r.id deve ser o id da Visita retornado pelo getCampo.
-    // Se o seu getCampo retornar outro nome de campo, ajuste aqui.
-    const visitaId = r.id ?? r.seq; // exemplo de ajuste caso getCampo retorne seq ao inves de id
+    const visitaId = r.id ?? r.seq;
 
     const payload = {
-      // campos do Imovel
       quarteirao:  get("f-quarteirao")  || undefined,
       logradouro:  get("f-logradouro")  || undefined,
       numero:      get("f-num")         || undefined,
       complemento: get("f-compl")       || undefined,
-
-      // campos da Visita
       tipoVisita:           tipoParaEnum(get("f-tipo") || r.tipo),
       informacao:           get("f-info") || undefined,
-
-      // depositos por tipo
       a1: getNum("f-a1"),
       a2: getNum("f-a2"),
       b:  getNum("f-b"),
@@ -271,8 +285,6 @@ addEventListener("DOMContentLoaded", async () => {
       d1: getNum("f-d1"),
       d2: getNum("f-d2"),
       e:  getNum("f-e"),
-
-      // larvicida / amostras
       depositosEliminados: getNum("f-elim"),
       amostraInicial:      getNum("f-amostIni"),
       amostraFinal:        getNum("f-amostFin"),
@@ -281,7 +293,6 @@ addEventListener("DOMContentLoaded", async () => {
       qtdDepTrat:          getNum("f-depTrat"),
     };
 
-    // remove chaves com undefined para nao sobrescrever com null acidentalmente
     Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
 
     const btn = document.getElementById("btn-salvar");
@@ -303,7 +314,6 @@ addEventListener("DOMContentLoaded", async () => {
       console.warn("PATCH falhou:", err);
     }
 
-    // ── atualiza estado local com os novos valores ─────────────────────────
     const atualizado = {
       ...r,
       quarteirao: get("f-quarteirao") || r.quarteirao,
@@ -337,9 +347,8 @@ addEventListener("DOMContentLoaded", async () => {
     const fi = homeFiltered.indexOf(r);
     if (fi !== -1) homeFiltered[fi] = atualizado;
 
-    // ── re-renderiza tudo ──────────────────────────────────────────────────
     homeRender();
-    recalcularAgentes(); // diario + semanal atualizados imediatamente
+    recalcularAgentes();
 
     fecharModalDireto();
     mostrarToast(
@@ -350,11 +359,10 @@ addEventListener("DOMContentLoaded", async () => {
     );
   };
 
-  // Converte o tipo exibido no front para o enum TipoVisita do Prisma
   function tipoParaEnum(tipo) {
     const mapa = {
-      "Residencia": "NORMAL", "Residencia": "NORMAL",
-      "Comercio":   "NORMAL", "Comercio":   "NORMAL",
+      "Residencia": "NORMAL",
+      "Comercio":   "NORMAL",
       "TB":         "NORMAL",
       "PE":         "NORMAL",
       "Outra":      "NORMAL",
@@ -376,23 +384,43 @@ addEventListener("DOMContentLoaded", async () => {
   };
 
   // ─── RECALCULAR AGENTES ────────────────────────────────────────────────────
-  // Chamado apos cada edicao e na carga inicial.
-  // Nao depende mais do endpoint /desempenho-individual para o semanal.
   function recalcularAgentes() {
+    populaMVPs();               // [CORREÇÃO 2] todos os agentes no ranking
     gerarFechamentoDiario(allFieldData);
     gerarFechamentoSemanal(allFieldData);
   }
 
-  // ── Fechamento Diario ───────────────────────────────────────────────────────
+  // ─── [CORREÇÃO 3] FECHAMENTO DIÁRIO ────────────────────────────────────────
+  // Problema anterior: um agente que trabalhasse em dois momentos distintos do
+  // mesmo dia poderia aparecer duas vezes porque a chave era gerada antes dos
+  // dados locais serem corretamente mesclados.
+  // Solução: a chave de agrupamento é SEMPRE "data|||agente" (normalizado) e
+  // o acúmulo é feito em um único objeto por chave — garantindo UMA linha por
+  // combinação data+agente, independente de quantos registros existam.
   function gerarFechamentoDiario(registros) {
+    // Normaliza a string para evitar duplicatas por espaço ou caixa
+    const normalizar = str => (str || "").trim().toLowerCase();
+
     const mapa = {};
     registros.forEach(r => {
-      const data   = r.data   || "?";
-      const agente = r.agente || "Nao informado";
-      const chave  = `${data}|||${agente}`;
+      const data   = (r.data   || "?").trim();
+      const agente = (r.agente || "Não informado").trim();
+      // chave normalizada → mesmo agente com grafias levemente diferentes são unificados
+      const chave  = `${normalizar(data)}|||${normalizar(agente)}`;
+
       if (!mapa[chave]) {
-        mapa[chave] = { data, agente, fechados: 0, inspecionados: 0, eliminados: 0, larvas: 0, recuperados: 0 };
+        mapa[chave] = {
+          data,
+          agente,           // guarda a versão original (não normalizada) para exibição
+          fechados:      0,
+          inspecionados: 0,
+          eliminados:    0,
+          larvas:        0,
+          recuperados:   0,
+        };
       }
+
+      // Acumula os valores numéricos — sem resetar o que já foi contado
       if (r.entrada === "N") { mapa[chave].fechados      += 1; }
       else                   { mapa[chave].inspecionados += 1; }
       mapa[chave].eliminados  += Number(r.elim    || 0);
@@ -404,15 +432,16 @@ addEventListener("DOMContentLoaded", async () => {
       const total = item.fechados + item.inspecionados;
       const razao = total > 0 ? item.fechados / total : 0;
       let status = "OK", classe = "pill-green";
-      if      (razao > 0.7) { status = "Critico"; classe = "pill-red";   }
-      else if (razao > 0.5) { status = "Atencao"; classe = "pill-amber"; }
+      if      (razao > 0.7) { status = "Crítico"; classe = "pill-red";   }
+      else if (razao > 0.5) { status = "Atenção"; classe = "pill-amber"; }
       return { ...item, status, classe };
     });
 
+    // Ordenação: data decrescente, depois agente alfabético
     dailyData.sort((a, b) => {
       const da = parseDateBR(a.data), db = parseDateBR(b.data);
       if (db !== da) return db - da;
-      return a.agente.localeCompare(b.agente);
+      return a.agente.localeCompare(b.agente, "pt-BR");
     });
 
     popularFiltrosDiario();
@@ -421,11 +450,11 @@ addEventListener("DOMContentLoaded", async () => {
     renderDailyTable();
   }
 
-  // ── Fechamento Semanal — calculado localmente, igual ao diario ──────────────
+  // ── Fechamento Semanal ──────────────────────────────────────────────────────
   function gerarFechamentoSemanal(registros) {
     const mapa = {};
     registros.forEach(r => {
-      const agente = r.agente || "Nao informado";
+      const agente = (r.agente || "Não informado").trim();
       if (!mapa[agente]) {
         mapa[agente] = {
           nome: agente,
@@ -439,7 +468,7 @@ addEventListener("DOMContentLoaded", async () => {
       mapa[agente].eliminados  += Number(r.elim    || 0);
       mapa[agente].larvas      += Number(r.tubitos || 0);
       mapa[agente].recuperados += Number(r.depTrat || 0);
-      if (r.data && r.data !== "?") mapa[agente].datas.add(r.data);
+      if (r.data && r.data !== "?") mapa[agente].datas.add(r.data.trim());
     });
 
     const rows = Object.values(mapa).map(a => ({
@@ -465,17 +494,18 @@ addEventListener("DOMContentLoaded", async () => {
         <td class="num">${soma("eliminados")}</td>
         <td class="num">${soma("larvas")}</td>
         <td class="num">${soma("recuperados")}</td>
-        <td class="num">?</td>
+        <td class="num">—</td>
       </tr>`;
   }
 
-  // ─── FILTROS DIARIO ────────────────────────────────────────────────────────
+  // ─── UTILITÁRIO ────────────────────────────────────────────────────────────
   function parseDateBR(str) {
     if (!str || str === "?") return 0;
     const [d, m, y] = str.split("/");
     return new Date(`${y}-${m}-${d}`).getTime() || 0;
   }
 
+  // ─── FILTROS DIÁRIO ────────────────────────────────────────────────────────
   function popularFiltrosDiario() {
     const agentes = [...new Set(dailyData.map(r => r.agente).filter(Boolean))].sort();
     const datas   = [...new Set(dailyData.map(r => r.data).filter(d => d && d !== "?"))]
@@ -752,7 +782,10 @@ addEventListener("DOMContentLoaded", async () => {
   aplicarSemanaUI();
   try { await carregarKpis();       } catch (e) { console.warn("KPIs:", e); }
   try { await carregarResumoArea(); } catch (e) { console.warn("Resumo area:", e); }
-  try { await carregarMVPs();       } catch (e) { console.warn("MVPs:", e); }
-  // semanal agora calculado dentro de carregarVisitas() via recalcularAgentes()
+  // [CORREÇÃO 2] populaMVPs() agora é chamado dentro de recalcularAgentes(),
+  // que por sua vez é chamado dentro de carregarVisitas() após os dados chegarem.
+  // Não chamamos mais carregarMVPs() separadamente.
   try { await carregarVisitas();    } catch (e) { console.warn("Visitas:", e); }
+  try { await carregarMVPs(); } catch (e) { console.warn("MVPs:", e); }
+  
 });
