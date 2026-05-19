@@ -387,8 +387,6 @@ addEventListener("DOMContentLoaded", async () => {
   }
 
   // ─── FECHAMENTO DIÁRIO ─────────────────────────────────────────────────────
-  // Acumula TODOS os campos da tabela de Registros de Campo, agrupados por
-  // data + agente (uma linha por combinação, sem duplicatas).
   function gerarFechamentoDiario(registros) {
     const normalizar = str => (str || "").trim().toLowerCase();
 
@@ -415,20 +413,18 @@ addEventListener("DOMContentLoaded", async () => {
           insp:          0,
           amostIni:      0,
           amostFin:      0,
-          larvas:        0,   // tubitos
+          larvas:        0,
           queda:         0,
           depTrat:       0,
-          recuperados:   0,   // alias de depTrat para manter compatibilidade
+          recuperados:   0,
         };
       }
 
       const m = mapa[chave];
 
-      // Imóveis fechados vs inspecionados
       if (r.entrada === "N") { m.fechados      += 1; }
       else                   { m.inspecionados += 1; }
 
-      // Depósitos por tipo
       m.a1       += Number(r.a1       || 0);
       m.a2       += Number(r.a2       || 0);
       m.b        += Number(r.b        || 0);
@@ -436,8 +432,6 @@ addEventListener("DOMContentLoaded", async () => {
       m.d1       += Number(r.d1       || 0);
       m.d2       += Number(r.d2       || 0);
       m.e        += Number(r.e        || 0);
-
-      // Eliminados / Larvicida / Amostras
       m.eliminados += Number(r.elim     || 0);
       m.insp       += Number(r.insp     || 0);
       m.amostIni   += Number(r.amostIni || 0);
@@ -457,7 +451,6 @@ addEventListener("DOMContentLoaded", async () => {
       return { ...item, status, classe };
     });
 
-    // Ordenação: data decrescente, depois agente alfabético
     dailyData.sort((a, b) => {
       const da = parseDateBR(a.data), db = parseDateBR(b.data);
       if (db !== da) return db - da;
@@ -470,31 +463,68 @@ addEventListener("DOMContentLoaded", async () => {
     renderDailyTable();
   }
 
-  // ── Fechamento Semanal ──────────────────────────────────────────────────────
+  // ─── FECHAMENTO SEMANAL ────────────────────────────────────────────────────
+  // Acumula os mesmos campos da tabela de Fechamento Diário, agrupados por agente.
   function gerarFechamentoSemanal(registros) {
     const mapa = {};
+
     registros.forEach(r => {
       const agente = (r.agente || "Não informado").trim();
+
       if (!mapa[agente]) {
         mapa[agente] = {
-          nome: agente,
-          fechados: 0, inspecionados: 0, eliminados: 0,
-          larvas: 0, recuperados: 0,
-          datas: new Set(),
+          nome:          agente,
+          fechados:      0,
+          inspecionados: 0,
+          a1:            0,
+          a2:            0,
+          b:             0,
+          c:             0,
+          d1:            0,
+          d2:            0,
+          e:             0,
+          eliminados:    0,
+          insp:          0,
+          amostIni:      0,
+          amostFin:      0,
+          larvas:        0,   // tubitos
+          queda:         0,
+          depTrat:       0,
+          recuperados:   0,
+          datas:         new Set(),
         };
       }
-      if (r.entrada === "N") { mapa[agente].fechados      += 1; }
-      else                   { mapa[agente].inspecionados += 1; }
-      mapa[agente].eliminados  += Number(r.elim    || 0);
-      mapa[agente].larvas      += Number(r.tubitos || 0);
-      mapa[agente].recuperados += Number(r.depTrat || 0);
-      if (r.data && r.data !== "?") mapa[agente].datas.add(r.data.trim());
+
+      const m = mapa[agente];
+
+      if (r.entrada === "N") { m.fechados      += 1; }
+      else                   { m.inspecionados += 1; }
+
+      m.a1         += Number(r.a1       || 0);
+      m.a2         += Number(r.a2       || 0);
+      m.b          += Number(r.b        || 0);
+      m.c          += Number(r.c        || 0);
+      m.d1         += Number(r.d1       || 0);
+      m.d2         += Number(r.d2       || 0);
+      m.e          += Number(r.e        || 0);
+      m.eliminados += Number(r.elim     || 0);
+      m.insp       += Number(r.insp     || 0);
+      m.amostIni   += Number(r.amostIni || 0);
+      m.amostFin   += Number(r.amostFin || 0);
+      m.larvas     += Number(r.tubitos  || 0);
+      m.queda      += Number(r.queda    || 0);
+      m.depTrat    += Number(r.depTrat  || 0);
+      m.recuperados+= Number(r.depTrat  || 0);
+
+      if (r.data && r.data !== "?") m.datas.add(r.data.trim());
     });
 
     const rows = Object.values(mapa).map(a => ({
-      ...a, diasTrabalhados: a.datas.size,
+      ...a,
+      diasTrabalhados: a.datas.size,
     }));
 
+    // Linha de totais (exceto diasTrabalhados que exibe "—")
     const soma = campo => rows.reduce((s, r) => s + r[campo], 0);
 
     document.getElementById("weekly-tbody").innerHTML =
@@ -502,8 +532,20 @@ addEventListener("DOMContentLoaded", async () => {
         <td><strong>${r.nome}</strong></td>
         <td class="num">${r.fechados}</td>
         <td class="num">${r.inspecionados}</td>
+        <td class="num">${r.a1}</td>
+        <td class="num">${r.a2}</td>
+        <td class="num">${r.b}</td>
+        <td class="num">${r.c}</td>
+        <td class="num">${r.d1}</td>
+        <td class="num">${r.d2}</td>
+        <td class="num">${r.e}</td>
         <td class="num">${r.eliminados}</td>
+        <td class="num">${r.insp}</td>
+        <td class="num">${r.amostIni}</td>
+        <td class="num">${r.amostFin}</td>
         <td class="num">${r.larvas}</td>
+        <td class="num">${r.queda}</td>
+        <td class="num">${r.depTrat}</td>
         <td class="num">${r.recuperados}</td>
         <td class="num">${r.diasTrabalhados}</td>
       </tr>`).join("") +
@@ -511,8 +553,20 @@ addEventListener("DOMContentLoaded", async () => {
         <td>TOTAL</td>
         <td class="num">${soma("fechados")}</td>
         <td class="num">${soma("inspecionados")}</td>
+        <td class="num">${soma("a1")}</td>
+        <td class="num">${soma("a2")}</td>
+        <td class="num">${soma("b")}</td>
+        <td class="num">${soma("c")}</td>
+        <td class="num">${soma("d1")}</td>
+        <td class="num">${soma("d2")}</td>
+        <td class="num">${soma("e")}</td>
         <td class="num">${soma("eliminados")}</td>
+        <td class="num">${soma("insp")}</td>
+        <td class="num">${soma("amostIni")}</td>
+        <td class="num">${soma("amostFin")}</td>
         <td class="num">${soma("larvas")}</td>
+        <td class="num">${soma("queda")}</td>
+        <td class="num">${soma("depTrat")}</td>
         <td class="num">${soma("recuperados")}</td>
         <td class="num">—</td>
       </tr>`;
@@ -555,7 +609,6 @@ addEventListener("DOMContentLoaded", async () => {
   };
 
   // ─── RENDER DAILY TABLE ────────────────────────────────────────────────────
-  // Exibe todas as colunas acumuladas (mesma estrutura da tabela de Registros de Campo)
   function renderDailyTable() {
     const start = (dailyPage - 1) * dailyPerPage;
     const slice = dailyFiltered.slice(start, start + dailyPerPage);
@@ -788,7 +841,7 @@ addEventListener("DOMContentLoaded", async () => {
     win.document.close();
   };
 
-  // ─── EXPORT DAILY XLSX (todas as colunas) ──────────────────────────────────
+  // ─── EXPORT DAILY XLSX ─────────────────────────────────────────────────────
   window.exportDailyXLSX = function () {
     const headers = [
       "Data", "Agente",
@@ -812,7 +865,7 @@ addEventListener("DOMContentLoaded", async () => {
     XLSX.writeFile(wb, "SISAV_Fechamento_Diario.xlsx");
   };
 
-  // ─── EXPORT DAILY PDF (todas as colunas) ───────────────────────────────────
+  // ─── EXPORT DAILY PDF ──────────────────────────────────────────────────────
   window.exportDailyPDF = function () {
     const win = window.open("", "_blank");
     const headers = [

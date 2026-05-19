@@ -340,9 +340,13 @@
     .tb-btn.resumo { border-color: #185FA5; color: #185FA5; }
     .tb-btn.resumo:hover { background: #E6F1FB; }
 
-    /* daily table scroll */
+    /* daily / weekly table scroll */
     .daily-wrap { overflow-x: auto; }
     .daily-table { min-width: 1400px; }
+
+    /* weekly table scroll — mesma largura mínima que a diária */
+    .weekly-wrap { overflow-x: auto; }
+    .weekly-table { min-width: 1600px; }
   </style>
 </head>
 <body>
@@ -514,7 +518,6 @@
           <button class="tb-btn pdf" onclick="exportDailyPDF()">⬇ PDF</button>
           <button class="tb-btn xlsx" onclick="exportDailyXLSX()">⬇ Excel</button>
         </div>
-        <!-- ► TABELA COM TODAS AS COLUNAS (igual à tabela de Registros de Campo) -->
         <div class="daily-wrap">
           <table class="daily-table">
             <thead><tr>
@@ -562,14 +565,27 @@
             <div class="card-sub" id="weekly-card-sub">Carregando...</div>
           </div>
         </div>
-        <div style="overflow-x:auto">
-          <table>
+        <!-- ► TABELA SEMANAL — mesmas colunas da tabela de Fechamento Diário -->
+        <div class="weekly-wrap">
+          <table class="weekly-table">
             <thead><tr>
               <th>Agente</th>
               <th class="num">Im. Fechados</th>
               <th class="num">Im. Inspecionados</th>
+              <th class="num">A1</th>
+              <th class="num">A2</th>
+              <th class="num">B</th>
+              <th class="num">C</th>
+              <th class="num">D1</th>
+              <th class="num">D2</th>
+              <th class="num">E</th>
               <th class="num">Dep. Eliminados</th>
-              <th class="num">Larvas Tratadas</th>
+              <th class="num">Insp. L1</th>
+              <th class="num">Amost. Ini.</th>
+              <th class="num">Amost. Fin.</th>
+              <th class="num">Tubitos</th>
+              <th class="num">Queda (g)</th>
+              <th class="num">Dep. Tratados</th>
               <th class="num">Recuperados</th>
               <th class="num">Total Dias</th>
             </tr></thead>
