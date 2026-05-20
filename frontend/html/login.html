@@ -129,66 +129,84 @@
     </div>
   </div>
 
-  <script>
-    const agenteLogado = localStorage.getItem("token")
-    if(agenteLogado){
-      window.location.href = 'turno.html'
-    }
-    const form = document.getElementById("loginForm");
-    const errorMsg = document.getElementById("errorMsg");
+<script>
+  // ── VERIFICAÇÃO DE SESSÃO ─────────────────────────────────────────────────
+  const tokenSalvo = localStorage.getItem("token");
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      errorMsg.style.display = "none";
+  if (tokenSalvo) {
+    try {
+      const payload = JSON.parse(atob(tokenSalvo.split(".")[1]));
+      const expirado = payload.exp * 1000 < Date.now();
 
-      const nome = document.getElementById("agente").value;
-      const senha = document.getElementById("senha").value;
-
-      if (!nome || !senha) {
-        errorMsg.textContent = "Preencha todos os campos.";
-        errorMsg.style.display = "block";
-        return;
-      }
-
-      try {
-        // 🔗 FUTURA INTEGRAÇÃO COM BACKEND
-        const response = await fetch("https://sisav-api.onrender.com/sync/login", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-            
-          },
-          body: JSON.stringify({ nome, senha })
-        });
-
-        if (!response.ok) {
-          throw new Error("Login inválido");
-        }
-
-        const data = await response.json();
-
-        // salvar token
-        localStorage.setItem("token", data.token);
-
-        const payload = JSON.parse(atob(data.token.split(".")[1]));
-        localStorage.setItem("agenteId", parseInt(payload.agenteId));
-        localStorage.setItem("nomeAgente", payload.nome);
-        localStorage.setItem("role", payload.role);
-
-        // Redirecionar para o sistema
-        if(payload.role === "COORDENADOR"){
+      if (expirado) {
+        // Limpa tudo e deixa o agente na tela de login
+        localStorage.removeItem("token");
+        localStorage.removeItem("agenteId");
+        localStorage.removeItem("nomeAgente");
+        localStorage.removeItem("role");
+        localStorage.removeItem("turnoAtivo");
+      } else {
+        // Token ainda válido — redireciona normalmente
+        const role = localStorage.getItem("role");
+        if (role === "COORDENADOR") {
           window.location.href = "../admin/sisav_adm_v4_spa.html";
         } else {
           window.location.href = "turno.html";
         }
-       
-
-      } catch (error) {
-        errorMsg.textContent = "E-mail ou senha inválidos.";
-        errorMsg.style.display = "block";
       }
-    });
-  </script>
+    } catch {
+      // Token malformado — limpa e deixa logar de novo
+      localStorage.clear();
+    }
+  }
+  // ── FIM DA VERIFICAÇÃO ────────────────────────────────────────────────────
+
+  const form = document.getElementById("loginForm");
+  const errorMsg = document.getElementById("errorMsg");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    errorMsg.style.display = "none";
+
+    const nome = document.getElementById("agente").value;
+    const senha = document.getElementById("senha").value;
+
+    if (!nome || !senha) {
+      errorMsg.textContent = "Preencha todos os campos.";
+      errorMsg.style.display = "block";
+      return;
+    }
+
+    try {
+      const response = await fetch("https://sisav-api.onrender.com/sync/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nome, senha })
+      });
+
+      if (!response.ok) throw new Error("Login inválido");
+
+      const data = await response.json();
+
+      localStorage.setItem("token", data.token);
+
+      const payload = JSON.parse(atob(data.token.split(".")[1]));
+      localStorage.setItem("agenteId", parseInt(payload.agenteId));
+      localStorage.setItem("nomeAgente", payload.nome);
+      localStorage.setItem("role", payload.role);
+
+      if (payload.role === "COORDENADOR") {
+        window.location.href = "../admin/sisav_adm_v4_spa.html";
+      } else {
+        window.location.href = "turno.html";
+      }
+
+    } catch (error) {
+      errorMsg.textContent = "E-mail ou senha inválidos.";
+      errorMsg.style.display = "block";
+    }
+  });
+</script>
 
 </body>
 </html>

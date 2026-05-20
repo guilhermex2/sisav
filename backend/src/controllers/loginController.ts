@@ -17,10 +17,10 @@ export async function login(req: Request, res: Response) {
     {
       agenteId: agente.id,
       nome: agente.nome,
-      role: agente.role // 🔥 aqui está a mudança importante
+      role: agente.role 
     },
     process.env.JWT_SECRET!,
-    { expiresIn: "1h" }
+    { expiresIn: "14h" }
   );
 
   res.json({
