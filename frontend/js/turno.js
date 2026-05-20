@@ -45,7 +45,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const data       = form.data.value;
     const agenteId   = localStorage.getItem("agenteId") || form.agente.value;
     const nomeAgente = form.agente.value;
 
@@ -56,7 +55,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     const turno = {
-      data:                 data,
       municipio:            form.municipio.value,
       ciclo:                form.ciclo.value,
       localidade:           form.localidade.value,

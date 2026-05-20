@@ -3,9 +3,7 @@ import { prisma } from "../libs/prisma";
 import { Request, Response } from "express";
 
 export async function syncTurno(req: Request, res: Response) {
-
-  // agenteId e nome vêm do token, não do body
-  const agenteId = req.agente?.agenteId;
+  const agenteId   = req.agente?.agenteId;
   const nomeAgente = req.agente?.nome;
 
   if (!agenteId || !nomeAgente) {
@@ -13,7 +11,6 @@ export async function syncTurno(req: Request, res: Response) {
   }
 
   const {
-    data,
     municipio,
     ciclo,
     localidade,
@@ -23,17 +20,39 @@ export async function syncTurno(req: Request, res: Response) {
     agente
   } = req.body;
 
+  // Data sempre gerada pelo servidor
+  const agora = new Date();
+  const hoje  = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+  // "hoje" sem horário, para comparar apenas por dia
+
   try {
+    // Bloqueia duplicata — agente só pode ter um turno aberto por dia
+    const turnoExistente = await prisma.turno.findFirst({
+      where: {
+        agenteId,
+        data:         hoje,
+        finalizadoEm: null,   // só bloqueia se ainda estiver aberto
+      }
+    });
+
+    if (turnoExistente) {
+      return res.status(409).json({
+        erro:     "Já existe um turno aberto para hoje.",
+        turnoId:  turnoExistente.id,
+      });
+    }
+
+    // Cria o turno com a data do servidor
     const turno = await prisma.turno.create({
       data: {
-        data: new Date(data),
+        data:               hoje,       // ← servidor
         municipio,
         ciclo,
         localidade,
         categoriaLocalidade: categoria_localidade,
         zona,
         atividade,
-        nomeAgente: agente,        // snapshot do nome para relatórios
+        nomeAgente:          agente,
         agente: {
           connect: { id: agenteId }
         }
@@ -41,6 +60,7 @@ export async function syncTurno(req: Request, res: Response) {
     });
 
     res.json({ ok: true, turnoId: turno.id });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ erro: "Erro ao salvar turno" });
