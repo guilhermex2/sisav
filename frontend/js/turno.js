@@ -14,16 +14,30 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (!token) {
     alert("Usuário não autenticado.");
     window.location.href = "login.html";
+    return;
   }
 
-  const turnoLogado = localStorage.getItem("turnoAtivo");
-  if (turnoLogado) {
-    window.location.href = "campo.html";
+  // ── VERIFICAÇÃO DE TURNO ANTERIOR ──────────────────────────────────────────
+  const turnoAtivoRaw = localStorage.getItem("turnoAtivo"); // ex: "2025-05-13_42"
+
+  if (turnoAtivoRaw) {
+    const [dataTurno] = turnoAtivoRaw.split("_");           // "2025-05-13"
+    const hoje = new Date().toISOString().split("T")[0];    // "2025-05-14"
+
+    if (dataTurno === hoje) {
+      // Turno de hoje ainda aberto — segue normalmente
+      window.location.href = "campo.html";
+      return;
+    }
+
+    // Turno de dia anterior encontrado — encerra automaticamente
+    await encerrarTurnoAnterior(dataTurno, turnoAtivoRaw);
+    // Não redireciona: deixa o agente criar o turno do dia
   }
+  // ── FIM DA VERIFICAÇÃO ─────────────────────────────────────────────────────
 
   const hoje     = new Date().toISOString().split("T")[0];
   const agenteId = localStorage.getItem("agenteId");
-
   const turnoHoje = await db.turnos.get({ data: hoje, agenteId });
 
   const form = document.getElementById("form-turno");
@@ -42,7 +56,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     const turno = {
-      data:                 form.data.value,
+      data:                 data,
       municipio:            form.municipio.value,
       ciclo:                form.ciclo.value,
       localidade:           form.localidade.value,
@@ -54,13 +68,54 @@ document.addEventListener("DOMContentLoaded", async () => {
       agenteId:             agenteId,
     };
 
-    
-    // salva no IndexedDB e enfileira para sync automático.
     await sync.salvarTurno(turno);
-
     localStorage.setItem("turnoAtivo", `${turno.data}_${agenteId}`);
-
     alert("Turno salvo com sucesso!");
     window.location.href = "campo.html";
   });
 });
+
+// ── FUNÇÃO DE ENCERRAMENTO AUTOMÁTICO ────────────────────────────────────────
+async function encerrarTurnoAnterior(dataTurno, turnoAtivoRaw) {
+  const agenteId = localStorage.getItem("agenteId");
+  const token    = localStorage.getItem("token");
+
+  try {
+    // 1. Marca o turno no IndexedDB como encerrado automaticamente
+    const turnoNoDb = await db.turnos.get({ data: dataTurno, agenteId });
+    if (turnoNoDb) {
+      await db.turnos.update(turnoNoDb.id, {
+        encerrado_automaticamente: true,
+        encerrado_em: new Date().toISOString(),
+      });
+    }
+
+    // 2. Tenta informar o backend (não bloqueia o fluxo se falhar)
+    await fetch("https://sisav-api.onrender.com/sync/turnos/encerrar-automatico", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        agente_id:  agenteId,
+        data_turno: dataTurno,
+        motivo:     "encerramento_automatico_sistema",
+      }),
+    });
+
+  } catch (err) {
+    // Sem conexão: o IndexedDB já foi atualizado, sync vai resolver depois
+    console.warn("[Turno] Falha ao notificar backend:", err.message);
+  } finally {
+    // 3. Limpa o localStorage independente do resultado
+    localStorage.removeItem("turnoAtivo");
+
+    // 4. Avisa o agente com contexto claro
+    alert(
+      `⚠️ Seu turno de ${dataTurno} não foi finalizado.\n` +
+      `Ele foi encerrado automaticamente pelo sistema.\n\n` +
+      `Cadastre o turno de hoje para continuar.`
+    );
+  }
+}

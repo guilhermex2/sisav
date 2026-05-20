@@ -36,6 +36,9 @@ model Turno {
   createdAt            DateTime @default(now())
   finalizadoEm         DateTime?
 
+  encerradoAutomaticamente Boolean  @default(false)
+  motivoEncerramento        String?
+  
   visitas              Visita[]
 }
 

@@ -20,5 +20,6 @@ mainRouter.get('/sisav/adm/kpis', admController.getKpis)
 mainRouter.get('/sisav/adm/resumo-area', admController.getResumoArea)
 mainRouter.get('/sisav/adm/desempenho-individual', admController.desempenhoSemanal)
 mainRouter.patch('/sisav/adm/visita/:id', admController.editarVisita)
+mainRouter.patch("/sync/turnos/encerrar-automatico", autenticarToken, TurnoController.encerrarTurnoAutomatico);
 
 export default mainRouter
