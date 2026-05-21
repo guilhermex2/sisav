@@ -40,21 +40,26 @@ document.addEventListener("DOMContentLoaded", async () => {
   const agenteId = localStorage.getItem("agenteId");
   const turnoHoje = await db.turnos.get({ data: hoje, agenteId });
 
-  const form = document.getElementById("form-turno");
+    const form = document.getElementById("form-turno");
 
-  form.addEventListener("submit", async (e) => {
+    form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const agenteId   = localStorage.getItem("agenteId") || form.agente.value;
     const nomeAgente = form.agente.value;
 
-    const turnoExiste = await db.turnos.get({ data, agenteId });
+    // Data gerada no frontend só para o localStorage e IndexedDB
+    // O backend vai ignorar e usar a data do servidor
+    const hoje = new Date().toISOString().split("T")[0];
+
+    const turnoExiste = await db.turnos.get({ data: hoje, agenteId });
     if (turnoExiste) {
       alert("Já existe turno salvo nesta data!");
       return;
     }
 
     const turno = {
+      data:                 hoje,         
       municipio:            form.municipio.value,
       ciclo:                form.ciclo.value,
       localidade:           form.localidade.value,
@@ -67,7 +72,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 
     await sync.salvarTurno(turno);
-    localStorage.setItem("turnoAtivo", `${turno.data}_${agenteId}`);
+    localStorage.setItem("turnoAtivo", `${hoje}_${agenteId}`); 
     alert("Turno salvo com sucesso!");
     window.location.href = "campo.html";
   });
