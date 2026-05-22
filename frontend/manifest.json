@@ -1,8 +1,8 @@
 {
   "name": "SISAV - Sistema Antivetorial",
   "short_name": "SISAV",
-  "start_url": "./html/login.html",
-  "scope": "./",
+  "start_url": "/sisav/frontend/html/login.html",
+  "scope": "/sisav/frontend/",
   "display": "standalone",
   "orientation": "landscape",
   "background_color": "#0d6efd",
@@ -10,16 +10,16 @@
   "description": "Sistema de Registro Diário do Serviço Antivetorial",
   "icons": [
     {
-      "src": "./icons/icon-192.png",
+      "src": "/sisav/frontend/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
-      "src": "./icons/icon-512.png",
+      "src": "/sisav/frontend/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
   ]
 }
