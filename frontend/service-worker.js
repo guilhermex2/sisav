@@ -26,15 +26,18 @@ const FILES_TO_CACHE = [
 ]
 
 self.addEventListener("install", event => {
-  console.log("📦 Instalando Service Worker SISAV");
-
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache =>
-      cache.addAll(FILES_TO_CACHE)
-      .catch(err => console.error("❌ Falha ao cachear arquivos:", err))
-    )
+    caches.open(CACHE_NAME).then(async cache => {
+      for (const file of FILES_TO_CACHE) {
+        try {
+          await cache.add(file);
+          console.log("✅ Cacheado:", file);
+        } catch (err) {
+          console.error("❌ Falhou:", file, err);
+        }
+      }
+    })
   );
-
   self.skipWaiting();
 });
 
