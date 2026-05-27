@@ -38,13 +38,34 @@ document.addEventListener("DOMContentLoaded", async () => {
     : null;
 
   if (modoRecuperacao && dadosPendente) {
-    preencherCampo("logradouro",  dadosPendente.logradouro);
-    preencherCampo("numero",      dadosPendente.numero);
-    preencherCampo("complemento", dadosPendente.complemento);
-    preencherCampo("quarteirao",  dadosPendente.quarteirao);
-    preencherCampo("sequencia",   dadosPendente.sequencia);
-    preencherCampo("lado",        dadosPendente.lado);
-    exibirAvisoRecuperacao(dadosPendente);
+    registro.is_recuperacao = true
+
+    // 1. Salva a visita normalmente via sync (tipoVisita vira RECUPERACAO no backend)
+    sync.salvarRegistro(registro)
+
+    // 2. Faz PATCH para marcar o ImovelFechado como RECUPERADO
+    if (dadosPendente.imovelFechadoId) {
+      try {
+        await fetch(
+          `https://sisav-api.onrender.com/imoveis-fechados/${dadosPendente.imovelFechadoId}/recuperar`,
+          {
+            method:  "PATCH",
+            headers: {
+              "Content-Type":  "application/json",
+              "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify({}),
+          }
+        )
+      } catch (err) {
+        console.warn("[Recuperação] Falha ao atualizar status:", err.message)
+        // Não bloqueia o fluxo — o backend pode reconciliar via sync depois
+      }
+    }
+
+    sessionStorage.removeItem("recuperacao_imovel")
+    alert("Recuperação registrada com sucesso!\nEste imóvel foi removido da lista de pendentes.")
+    window.location.href = "pendentes.html"
   }
 
   // ── SUBMIT ────────────────────────────────────────────────────

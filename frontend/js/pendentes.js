@@ -1,185 +1,140 @@
-// pendentes.js — substitui o bloco <script> inline do pendentes.html
-// FIX 2: TIPOS_FECHADO expandido para incluir todos os sufixos -F e RECUSA
-// FIX 4: Badge verde RECUPERADO nos imóveis já recuperados (ficam visíveis sem filtro)
+// pendentes.js
 
-// ── ESTADO GLOBAL ──────────────────────────────────────────────
-let todosOsPendentes   = [];
-let imovelSelecionado  = null;
 
-// ── INDEXEDDB ──────────────────────────────────────────────────
-function abrirDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open('antivetorialDB');
-    req.onsuccess = () => resolve(req.result);
-    req.onerror   = () => reject(req.error);
-  });
+const API_URL = "https://sisav-api.onrender.com"
+
+let todosOsPendentes  = []
+let imovelSelecionado = null
+
+function getHeaders() {
+  return {
+    "Content-Type":  "application/json",
+    "Authorization": `Bearer ${localStorage.getItem("token")}`,
+  }
 }
 
-function lerTodos(db, storeName) {
-  return new Promise((resolve, reject) => {
-    const tx    = db.transaction(storeName, 'readonly');
-    const store = tx.objectStore(storeName);
-    const req   = store.getAll();
-    req.onsuccess = () => resolve(req.result);
-    req.onerror   = () => reject(req.error);
-  });
-}
-
-// ── CHAVE DE ENDEREÇO ──────────────────────────────────────────
-function chaveEndereco(r) {
-  return [
-    (r.logradouro  || '').trim().toLowerCase(),
-    (r.numero      || '').trim().toLowerCase(),
-    (r.complemento || '').trim().toLowerCase(),
-  ].join('|');
-}
-
-// ── CALCULAR DIAS EM ABERTO ────────────────────────────────────
-function diasEmAberto(data_turno) {
-  if (!data_turno) return 0;
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-  const dt = new Date(data_turno + 'T00:00:00');
-  return Math.floor((hoje - dt) / 86400000);
-}
-
-// ── LÓGICA PRINCIPAL ───────────────────────────────────────────
+// ── CARREGAR ───────────────────────────────────────────────────
 async function carregarPendentes() {
-  const btn = document.getElementById('btn-atualizar');
-  btn.classList.add('girando');
-  mostrarEstado('carregando');
+  const btn = document.getElementById("btn-atualizar")
+  btn.classList.add("girando")
+  mostrarEstado("carregando")
 
   try {
-    const idb      = await abrirDB();
+    const res = await fetch(`${API_URL}/imoveis-fechados`, {
+      headers: getHeaders(),
+    })
 
-    // FIX 3: Lê também a store de recuperações
-    const registros    = await lerTodos(idb, 'registros');
-    let   recuperacoes = [];
-    try { recuperacoes = await lerTodos(idb, 'recuperacao'); } catch (_) {}
+    if (!res.ok) throw new Error(`Erro ${res.status}`)
 
-    // FIX 2: Todos os tipos fechados + RECUSA
-    const TIPOS_FECHADO = new Set(['R-F', 'C-F', 'TB-F', 'PE-F', 'O-F', 'RECUSA']);
+    const dados = await res.json()
 
-    const fechados = registros.filter(r =>
-      TIPOS_FECHADO.has((r.tipo_imovel || '').toUpperCase())
-    );
+    // Calcula dias em aberto no cliente (evita lógica de data no backend)
+    todosOsPendentes = dados.map(item => ({
+      ...item,
+      dias:   diasEmAberto(item.dataFechamento),
+      // Normaliza para o mesmo formato que o HTML já usa
+      status: item.status.toLowerCase(), // "FECHADO"→"fechado", "PENDENTE"→"pendente", etc.
+    }))
 
-    // Indexa recuperações por id de referência E por endereço
-    const recupPorRef     = new Set(recuperacoes.map(r => r.recuperacao_ref).filter(Boolean));
-    const recupPorEndereco = {};
-    for (const rec of recuperacoes) {
-      const chave = chaveEndereco(rec);
-      if (!recupPorEndereco[chave]) recupPorEndereco[chave] = [];
-      recupPorEndereco[chave].push(rec.data_turno || '');
-    }
-
-    const pendentes    = [];
-    const recuperados  = []; // FIX 4: fechados que já foram recuperados
-
-    for (const f of fechados) {
-      const chave      = chaveEndereco(f);
-      const dataFechado = f.data_turno || '';
-
-      // Verifica recuperação: por ref de id OU por endereço+data posterior
-      const foiRecuperadoPorRef      = f.id && recupPorRef.has(f.id);
-      const datasRec                 = recupPorEndereco[chave] || [];
-      const foiRecuperadoPorEndereco = datasRec.some(d => d > dataFechado);
-      const foiRecuperado            = foiRecuperadoPorRef || foiRecuperadoPorEndereco || f.recuperado === true;
-
-      if (foiRecuperado) {
-        // FIX 4: Mantém na lista com status RECUPERADO
-        recuperados.push({ ...f, dias: diasEmAberto(dataFechado), status: 'recuperado' });
-      } else {
-        pendentes.push({ ...f, dias: diasEmAberto(dataFechado), status: 'pendente' });
-      }
-    }
-
-    // Ordena: pendentes mais antigos primeiro, recuperados mais recentes primeiro
-    pendentes.sort((a, b)   => (a.data_turno || '') < (b.data_turno || '') ? -1 : 1);
-    recuperados.sort((a, b) => (a.data_turno || '') > (b.data_turno || '') ? -1 : 1);
-
-    // FIX 2 + FIX 4: pendentes SEM filtro já mostra tudo (pendentes + recuperados)
-    todosOsPendentes = [...pendentes, ...recuperados];
-
-    aplicarFiltros();
+    aplicarFiltros()
 
   } catch (err) {
-    console.error('Erro ao carregar pendentes:', err);
-    mostrarEstado('erro', 'Não foi possível acessar o banco de dados.<br>Verifique se o sistema está aberto corretamente.');
+    console.error("Erro ao carregar pendentes:", err)
+    mostrarEstado("erro", "Não foi possível carregar os dados. Verifique sua conexão.")
   } finally {
-    btn.classList.remove('girando');
+    btn.classList.remove("girando")
   }
+}
+
+// ── DIAS EM ABERTO ─────────────────────────────────────────────
+function diasEmAberto(dataFechamento) {
+  if (!dataFechamento) return 0
+  const hoje    = new Date()
+  hoje.setHours(0, 0, 0, 0)
+  const fechado = new Date(dataFechamento)
+  fechado.setHours(0, 0, 0, 0)
+  return Math.floor((hoje - fechado) / 86400000)
 }
 
 // ── FILTROS ────────────────────────────────────────────────────
 function aplicarFiltros() {
-  const tipo   = document.getElementById('filtro-tipo').value;
-  const busca  = document.getElementById('filtro-busca').value.toLowerCase().trim();
-  const status = document.getElementById('filtro-status')?.value || '';
+  const tipo   = document.getElementById("filtro-tipo").value
+  const busca  = document.getElementById("filtro-busca").value.toLowerCase().trim()
+  const status = document.getElementById("filtro-status")?.value || ""
 
-  let filtrados = todosOsPendentes;
+  let filtrados = todosOsPendentes
 
-  if (tipo)   filtrados = filtrados.filter(p => (p.tipo_imovel || '').toUpperCase() === tipo);
-  if (busca)  filtrados = filtrados.filter(p =>
-    (p.logradouro  || '').toLowerCase().includes(busca) ||
-    (p.numero      || '').toLowerCase().includes(busca) ||
-    (p.complemento || '').toLowerCase().includes(busca)
-  );
-  // FIX 4: filtro por status (pendente/recuperado)
-  if (status === 'pendente')   filtrados = filtrados.filter(p => p.status === 'pendente');
-  if (status === 'recuperado') filtrados = filtrados.filter(p => p.status === 'recuperado');
+  if (tipo) {
+    filtrados = filtrados.filter(p =>
+      (p.tipoImovel || "").toUpperCase() === tipo
+    )
+  }
 
-  renderizarPendentes(filtrados);
+  if (busca) {
+    filtrados = filtrados.filter(p => {
+      const logradouro  = (p.imovel?.logradouro  || "").toLowerCase()
+      const numero      = (p.imovel?.numero       || "").toLowerCase()
+      const complemento = (p.imovel?.complemento  || "").toLowerCase()
+      return logradouro.includes(busca) || numero.includes(busca) || complemento.includes(busca)
+    })
+  }
+
+  if (status === "pendente") {
+    filtrados = filtrados.filter(p => p.status === "fechado" || p.status === "pendente")
+  } else if (status === "recuperado") {
+    filtrados = filtrados.filter(p => p.status === "recuperado")
+  }
+
+  renderizarPendentes(filtrados)
 }
 
 // ── RENDER ─────────────────────────────────────────────────────
 function renderizarPendentes(pendentes) {
-  const badge    = document.getElementById('badge-total');
-  const conteudo = document.getElementById('conteudo');
+  const badge    = document.getElementById("badge-total")
+  const conteudo = document.getElementById("conteudo")
 
-  const qtdPendentes   = pendentes.filter(p => p.status === 'pendente').length;
-  const qtdRecuperados = pendentes.filter(p => p.status === 'recuperado').length;
+  const qtdPendentes   = pendentes.filter(p => p.status === "fechado" || p.status === "pendente").length
+  const qtdRecuperados = pendentes.filter(p => p.status === "recuperado").length
 
   if (pendentes.length === 0) {
-    badge.style.display = 'none';
-    mostrarEstado('vazio', 'Nenhum imóvel encontrado com os filtros aplicados.');
-    return;
+    badge.style.display = "none"
+    mostrarEstado("vazio", "Nenhum imóvel encontrado com os filtros aplicados.")
+    return
   }
 
-  badge.textContent    = `${qtdPendentes} pendente${qtdPendentes !== 1 ? 's' : ''}`;
-  badge.style.display  = 'inline-block';
+  badge.textContent   = `${qtdPendentes} pendente${qtdPendentes !== 1 ? "s" : ""}`
+  badge.style.display = "inline-block"
 
-  // Badge extra de recuperados
-  let badgeRecupEl = document.getElementById('badge-recuperados');
+  let badgeRecupEl = document.getElementById("badge-recuperados")
   if (!badgeRecupEl) {
-    badgeRecupEl = document.createElement('span');
-    badgeRecupEl.id = 'badge-recuperados';
+    badgeRecupEl    = document.createElement("span")
+    badgeRecupEl.id = "badge-recuperados"
     badgeRecupEl.style.cssText = `
       background: #2E7D32; color: #fff;
       font-size: 12px; font-weight: 700;
       padding: 3px 10px; border-radius: 20px;
       margin-left: 6px; letter-spacing: 0.3px;
-    `;
-    badge.insertAdjacentElement('afterend', badgeRecupEl);
+    `
+    badge.insertAdjacentElement("afterend", badgeRecupEl)
   }
-  badgeRecupEl.textContent   = qtdRecuperados > 0 ? `${qtdRecuperados} recuperado${qtdRecuperados !== 1 ? 's' : ''}` : '';
-  badgeRecupEl.style.display = qtdRecuperados > 0 ? 'inline-block' : 'none';
+  badgeRecupEl.textContent   = qtdRecuperados > 0 ? `${qtdRecuperados} recuperado${qtdRecuperados !== 1 ? "s" : ""}` : ""
+  badgeRecupEl.style.display = qtdRecuperados > 0 ? "inline-block" : "none"
 
-  // Agrupar por agente
-  const grupos = {};
+  // Agrupa por agente
+  const grupos = {}
   for (const p of pendentes) {
-    const chave = p.agente || p.agenteId || '—';
-    if (!grupos[chave]) grupos[chave] = [];
-    grupos[chave].push(p);
+    const chave = p.agente?.nome || "—"
+    if (!grupos[chave]) grupos[chave] = []
+    grupos[chave].push(p)
   }
 
-  let html = '';
+  let html = ""
   for (const [nomeAgente, itens] of Object.entries(grupos)) {
     html += `
       <div class="grupo-agente">
         <div class="grupo-titulo">
           <span class="nome-agente">👤 ${nomeAgente}</span>
-          <span class="badge-agente">${itens.length} imóvel${itens.length !== 1 ? 'is' : ''}</span>
+          <span class="badge-agente">${itens.length} imóvel${itens.length !== 1 ? "is" : ""}</span>
         </div>
         <div class="tabela-wrap">
           <table>
@@ -191,174 +146,178 @@ function renderizarPendentes(pendentes) {
                 <th>Compl.</th>
                 <th>Quarteirão</th>
                 <th>Tipo</th>
+                <th>Tentativas</th>
                 <th>Dias em aberto</th>
                 <th>Status</th>
                 <th>Ação</th>
               </tr>
             </thead>
             <tbody>
-              ${itens.map(p => linhaTabela(p)).join('')}
+              ${itens.map(p => linhaTabela(p)).join("")}
             </tbody>
           </table>
         </div>
-      </div>`;
+      </div>`
   }
 
-  conteudo.innerHTML = html;
+  conteudo.innerHTML = html
 }
 
 function linhaTabela(p) {
-  const tipoUpper   = (p.tipo_imovel || '').toUpperCase();
-  const recuperado  = p.status === 'recuperado';
+  const tipo       = (p.tipoImovel || "").toUpperCase()
+  const recuperado = p.status === "recuperado"
+  const recusado   = p.status === "recusado"
 
-  // Classe de cor do tipo
-  const tagClasse = tipoUpper.startsWith('R') ? 'tag-rf'
-                  : tipoUpper.startsWith('C') ? 'tag-cf'
-                  : tipoUpper === 'RECUSA'     ? 'tag-cf'
-                  : 'tag-rf';
+  const tagClasse = tipo.startsWith("R") ? "tag-rf"
+                  : tipo.startsWith("C") ? "tag-cf"
+                  : tipo === "RECUSA"    ? "tag-cf"
+                  : "tag-rf"
 
-  let diasClasse = 'dias-ok';
-  if (p.dias >= 7)      diasClasse = 'dias-urgente';
-  else if (p.dias >= 3) diasClasse = 'dias-atencao';
+  let diasClasse = "dias-ok"
+  if (p.dias >= 7)      diasClasse = "dias-urgente"
+  else if (p.dias >= 3) diasClasse = "dias-atencao"
 
-  const dataFmt  = p.data_turno ? p.data_turno.split('-').reverse().join('/') : '—';
-  const dadosJson = encodeURIComponent(JSON.stringify(p));
+  const dataFmt     = p.dataFechamento
+    ? new Date(p.dataFechamento).toLocaleDateString("pt-BR")
+    : "—"
 
-  // FIX 4: Badge verde RECUPERADO vs laranja PENDENTE
+  const tentativas  = p.tentativas?.length ?? 0
+  const dadosJson   = encodeURIComponent(JSON.stringify(p))
+
   const statusBadge = recuperado
-    ? `<span style="
-        display:inline-block;padding:3px 11px;border-radius:20px;
-        font-size:11.5px;font-weight:700;
-        background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;">
-        ✅ RECUPERADO
-      </span>`
-    : `<span style="
-        display:inline-block;padding:3px 11px;border-radius:20px;
-        font-size:11.5px;font-weight:700;
-        background:#FFF3E0;color:#E65100;border:1px solid #FFCC80;">
-        ⏳ PENDENTE
-      </span>`;
+    ? `<span style="display:inline-block;padding:3px 11px;border-radius:20px;font-size:11.5px;font-weight:700;background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;">✅ RECUPERADO</span>`
+    : recusado
+    ? `<span style="display:inline-block;padding:3px 11px;border-radius:20px;font-size:11.5px;font-weight:700;background:#FFEBEE;color:#C62828;border:1px solid #FFCDD2;">🚫 RECUSADO</span>`
+    : p.status === "pendente"
+    ? `<span style="display:inline-block;padding:3px 11px;border-radius:20px;font-size:11.5px;font-weight:700;background:#FFF3E0;color:#E65100;border:1px solid #FFCC80;">⏳ PENDENTE</span>`
+    : `<span style="display:inline-block;padding:3px 11px;border-radius:20px;font-size:11.5px;font-weight:700;background:#FFF3E0;color:#E65100;border:1px solid #FFCC80;">⏳ FECHADO</span>`
 
-  // FIX 4: Botão desabilitado se já recuperado
-  const btnRecuperar = recuperado
-    ? `<button class="btn-recuperar" disabled
-        style="opacity:0.45;cursor:not-allowed;background:#9e9e9e;">
-        ✅ Recuperado
+  const btnRecuperar = (recuperado || recusado)
+    ? `<button class="btn-recuperar" disabled style="opacity:0.45;cursor:not-allowed;background:#9e9e9e;">
+        ${recuperado ? "✅ Recuperado" : "🚫 Recusado"}
        </button>`
     : `<button class="btn-recuperar" onclick="abrirModal('${dadosJson}')">
         🔓 Recuperar
-       </button>`;
+       </button>`
 
-  // Destaque visual da linha se recuperado
-  const trStyle = recuperado ? 'style="background:#f0fdf4;"' : '';
+  const trStyle = recuperado ? 'style="background:#f0fdf4;"'
+                : recusado   ? 'style="background:#fff5f5;"'
+                : ""
 
   return `
     <tr ${trStyle}>
       <td>${dataFmt}</td>
-      <td><strong>${p.logradouro || '—'}</strong></td>
-      <td>${p.numero || '—'}</td>
-      <td>${p.complemento || '—'}</td>
-      <td>${p.quarteirao || '—'}</td>
-      <td><span class="tag-tipo ${tagClasse}">${tipoUpper}</span></td>
+      <td><strong>${p.imovel?.logradouro || "—"}</strong></td>
+      <td>${p.imovel?.numero      || "—"}</td>
+      <td>${p.imovel?.complemento || "—"}</td>
+      <td>${p.imovel?.quarteirao  || "—"}</td>
+      <td><span class="tag-tipo ${tagClasse}">${tipo}</span></td>
+      <td style="text-align:center">${tentativas}</td>
       <td>
         <span class="dias-badge ${diasClasse}">
-          ${p.dias === 0 ? 'Hoje' : p.dias === 1 ? '1 dia' : `${p.dias} dias`}
+          ${p.dias === 0 ? "Hoje" : p.dias === 1 ? "1 dia" : `${p.dias} dias`}
         </span>
       </td>
       <td>${statusBadge}</td>
       <td>${btnRecuperar}</td>
-    </tr>`;
+    </tr>`
 }
 
 // ── ESTADOS DA TELA ────────────────────────────────────────────
 function mostrarEstado(tipo, msg) {
-  const badge    = document.getElementById('badge-total');
-  const conteudo = document.getElementById('conteudo');
+  const badge    = document.getElementById("badge-total")
+  const conteudo = document.getElementById("conteudo")
 
-  if (tipo === 'carregando') {
-    badge.style.display = 'none';
+  if (tipo === "carregando") {
+    badge.style.display = "none"
     conteudo.innerHTML  = `
       <div class="estado-tela">
         <div class="spinner"></div>
         <p>Carregando imóveis pendentes...</p>
-      </div>`;
-    return;
+      </div>`
+    return
   }
-  if (tipo === 'erro') {
-    badge.style.display = 'none';
+  if (tipo === "erro") {
+    badge.style.display = "none"
     conteudo.innerHTML  = `
       <div class="estado-tela">
         <div class="icone">⚠️</div>
         <p>${msg}</p>
-      </div>`;
-    return;
+      </div>`
+    return
   }
-  if (tipo === 'vazio') {
+  if (tipo === "vazio") {
     conteudo.innerHTML = `
       <div class="estado-tela">
         <div class="icone">✅</div>
-        <p>${msg || 'Nenhum imóvel pendente!'}</p>
-      </div>`;
-    return;
+        <p>${msg || "Nenhum imóvel pendente!"}</p>
+      </div>`
+    return
   }
 }
 
 // ── MODAL ──────────────────────────────────────────────────────
 function abrirModal(dadosJson) {
-  const p = JSON.parse(decodeURIComponent(dadosJson));
-  imovelSelecionado = p;
+  const p = JSON.parse(decodeURIComponent(dadosJson))
+  imovelSelecionado = p
 
-  const dataFmt  = p.data_turno ? p.data_turno.split('-').reverse().join('/') : '—';
+  const dataFmt = p.dataFechamento
+    ? new Date(p.dataFechamento).toLocaleDateString("pt-BR")
+    : "—"
+
   const tipoNomes = {
-    'R-F':    'Residencial Fechado',
-    'C-F':    'Comercial Fechado',
-    'TB-F':   'Terreno Baldio Fechado',
-    'PE-F':   'Ponto Estratégico Fechado',
-    'O-F':    'Outro Fechado',
-    'RECUSA': 'Recusa do Morador',
-  };
-  const tipoNome = tipoNomes[(p.tipo_imovel || '').toUpperCase()] || p.tipo_imovel;
+    "R-F":    "Residencial Fechado",
+    "C-F":    "Comercial Fechado",
+    "TB-F":   "Terreno Baldio Fechado",
+    "PE-F":   "Ponto Estratégico Fechado",
+    "O-F":    "Outro Fechado",
+    "RECUSA": "Recusa do Morador",
+  }
 
-  document.getElementById('modal-info').innerHTML = `
-    <strong>Logradouro:</strong> ${p.logradouro || '—'}<br>
-    <strong>Número:</strong> ${p.numero || '—'}<br>
-    <strong>Complemento:</strong> ${p.complemento || '—'}<br>
-    <strong>Quarteirão:</strong> ${p.quarteirao || '—'}<br>
-    <strong>Tipo original:</strong> ${tipoNome}<br>
+  document.getElementById("modal-info").innerHTML = `
+    <strong>Logradouro:</strong> ${p.imovel?.logradouro || "—"}<br>
+    <strong>Número:</strong>     ${p.imovel?.numero      || "—"}<br>
+    <strong>Complemento:</strong>${p.imovel?.complemento || "—"}<br>
+    <strong>Quarteirão:</strong> ${p.imovel?.quarteirao  || "—"}<br>
+    <strong>Tipo original:</strong> ${tipoNomes[p.tipoImovel] || p.tipoImovel}<br>
     <strong>Data do fechamento:</strong> ${dataFmt}<br>
-    <strong>Dias em aberto:</strong> ${p.dias === 0 ? 'Hoje' : p.dias === 1 ? '1 dia' : `${p.dias} dias`}
-  `;
+    <strong>Tentativas anteriores:</strong> ${p.tentativas?.length ?? 0}<br>
+    <strong>Dias em aberto:</strong> ${p.dias === 0 ? "Hoje" : p.dias === 1 ? "1 dia" : `${p.dias} dias`}
+  `
 
-  document.getElementById('modal-overlay').classList.add('aberto');
+  document.getElementById("modal-overlay").classList.add("aberto")
 }
 
 function fecharModal() {
-  document.getElementById('modal-overlay').classList.remove('aberto');
-  imovelSelecionado = null;
+  document.getElementById("modal-overlay").classList.remove("aberto")
+  imovelSelecionado = null
 }
 
 function confirmarRecuperacao() {
-  if (!imovelSelecionado) return;
+  if (!imovelSelecionado) return
 
-  // Salva os dados no sessionStorage para o campo.js ler
-  sessionStorage.setItem('recuperacao_imovel', JSON.stringify(imovelSelecionado));
-  fecharModal();
+  // Passa o id do ImovelFechado para o campo.js via sessionStorage
+  // O campo.js usa esse id para fazer o PATCH /imoveis-fechados/:id/recuperar
+  sessionStorage.setItem("recuperacao_imovel", JSON.stringify({
+    imovelFechadoId: imovelSelecionado.id,
+    logradouro:      imovelSelecionado.imovel?.logradouro,
+    numero:          imovelSelecionado.imovel?.numero,
+    complemento:     imovelSelecionado.imovel?.complemento,
+    quarteirao:      imovelSelecionado.imovel?.quarteirao,
+  }))
 
-  // Redireciona para o formulário de campo no modo recuperação
-  window.location.href = 'campo.html?recuperacao=1';
+  fecharModal()
+  window.location.href = "campo.html?recuperacao=1"
 }
 
-// Fechar modal ao clicar fora
-document.getElementById('modal-overlay').addEventListener('click', function (e) {
-  if (e.target === this) fecharModal();
-});
+document.getElementById("modal-overlay").addEventListener("click", function (e) {
+  if (e.target === this) fecharModal()
+})
 
-// Expõe funções usadas no HTML inline
-window.carregarPendentes  = carregarPendentes;
-window.aplicarFiltros     = aplicarFiltros;
-window.abrirModal         = abrirModal;
-window.fecharModal        = fecharModal;
-window.confirmarRecuperacao = confirmarRecuperacao;
+window.carregarPendentes   = carregarPendentes
+window.aplicarFiltros      = aplicarFiltros
+window.abrirModal          = abrirModal
+window.fecharModal         = fecharModal
+window.confirmarRecuperacao = confirmarRecuperacao
 
-// ── INICIALIZAR ────────────────────────────────────────────────
-carregarPendentes();
+carregarPendentes()
