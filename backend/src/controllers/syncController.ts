@@ -7,6 +7,7 @@
 import { Request, Response } from "express"
 import { prisma } from "../libs/prisma"
 import { PrismaClient } from "@prisma/client"
+import { criarSeNecessario } from "../services/imovelFechadoService"
 
 type TransactionClient = Omit<
   PrismaClient,
@@ -126,7 +127,7 @@ async function salvarRegistro(
   const tipoImovel  = String(dado.tipo_imovel ?? "R").toUpperCase().trim()
   const tipoVisita  = mapearTipoVisita(tipoImovel, Boolean(dado.is_recuperacao))
 
-  await tx.visita.create({
+  const visita = await tx.visita.create({
     data: {
       turnoId:  turno.id,
       agenteId,
@@ -152,6 +153,16 @@ async function salvarRegistro(
       qtdTubitos:          toInt(dado.qtd_tubitos),
       quedaGramas:         toInt(dado.queda_gramas),
     },
+  })
+
+  // Hook: cria ImovelFechado automaticamente se for visita fechada
+  await criarSeNecessario(tx, {
+    tipoVisita:  tipoVisita,
+    visitaId:    visita.id,
+    imovelId:    imovel.id,
+    turnoId:     turno.id,
+    agenteId:    agenteId,
+    informacao:  dado.informacao ? String(dado.informacao) : null,
   })
 }
 

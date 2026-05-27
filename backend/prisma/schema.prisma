@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Agente {
@@ -16,6 +17,8 @@ model Agente {
 
   turnos    Turno[]
   visitas   Visita[]
+  fechamentos   ImovelFechado[]
+  tentativas    TentativaRecuperacao[]
 }
 
 model Turno {
@@ -40,6 +43,8 @@ model Turno {
   motivoEncerramento        String?
   
   visitas              Visita[]
+  fechamentos   ImovelFechado[]
+  tentativas    TentativaRecuperacao[]
 }
 
 model Imovel {
@@ -56,6 +61,7 @@ model Imovel {
   createdAt   DateTime @default(now())
 
   visitas     Visita[]
+  fechamentos   ImovelFechado[]
 }
 
 model Visita {
@@ -94,7 +100,69 @@ model Visita {
   quedaGramas          Int?
 
   criadoEm       DateTime @default(now())
+  imovelFechado         ImovelFechado? @relation("VisitaFechamento")
+  imovelRecuperacao     ImovelFechado? @relation("VisitaRecuperacao")
 }
+model ImovelFechado {
+  id        Int      @id @default(autoincrement())
+
+  imovelId  Int
+  imovel    Imovel   @relation(fields: [imovelId], references: [id])
+
+  turnoId   Int
+  turno     Turno    @relation(fields: [turnoId], references: [id])
+
+  agenteId  Int
+  agente    Agente   @relation(fields: [agenteId], references: [id])
+
+  tipoImovel  String   // "R-F", "C-F", "TB-F", "PE-F", "O-F", "RECUSA"
+  status      StatusFechado @default(FECHADO)
+
+  motivoFechamento  String?
+  dataFechamento    DateTime @default(now())
+  dataRecuperacao   DateTime?
+
+  visitaOrigemId    Int?     @unique  // Visita que gerou o fechamento
+  visitaOrigem    Visita?  @relation("VisitaFechamento", fields: [visitaOrigemId], references: [id])
+
+  visitaRecuperacaoId Int?   @unique  // Visita que recuperou
+  visitaRecuperacao   Visita? @relation("VisitaRecuperacao", fields: [visitaRecuperacaoId], references: [id])
+
+  tentativas  TentativaRecuperacao[]
+
+  criadoEm   DateTime @default(now())
+}
+
+model TentativaRecuperacao {
+  id              Int      @id @default(autoincrement())
+
+  imovelFechadoId Int
+  imovelFechado   ImovelFechado @relation(fields: [imovelFechadoId], references: [id])
+
+  agenteId  Int
+  agente    Agente @relation(fields: [agenteId], references: [id])
+
+  turnoId   Int
+  turno     Turno  @relation(fields: [turnoId], references: [id])
+
+  resultado   ResultadoTentativa
+  observacao  String?
+  criadoEm    DateTime @default(now())
+}
+
+enum StatusFechado {
+  FECHADO
+  PENDENTE    // 2ª tentativa em diante sem sucesso
+  RECUPERADO
+  RECUSADO
+}
+
+enum ResultadoTentativa {
+  SEM_RESPOSTA
+  RECUSA
+  RECUPERADO
+}
+
 enum Role {
   AGENTE
   COORDENADOR
