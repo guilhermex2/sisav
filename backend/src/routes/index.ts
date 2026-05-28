@@ -17,7 +17,7 @@ mainRouter.post('/api/turnos/finalizar', finalizarController.finalizarTurno) // 
 mainRouter.patch("/sync/turnos/encerrar-automatico", autenticarToken, TurnoController.encerrarTurnoAutomatico);
 
 // GET  /imoveis-fechados?status=FECHADO&agenteId=1&municipio=...
-mainRouter.get("/", imovelFechadoController.listar)
+mainRouter.get("/imoveis-fechados", imovelFechadoController.listar)
 
 // POST /imoveis-fechados/:id/tentativa
 mainRouter.post("/:id/tentativa", imovelFechadoController.registrarTentativa)
