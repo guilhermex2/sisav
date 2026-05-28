@@ -12,8 +12,13 @@ sync.init();
 document.addEventListener("DOMContentLoaded", async () => {
   const token = localStorage.getItem("token");
   if (!token) {
-    alert("Usuário não autenticado.");
-    window.location.href = "login.html";
+    Swal.fire({
+      title: "Usuário não autenticado",
+      text: "Faça login para acessar esta página.",
+      icon: "warning"
+    }).then(() => {
+      window.location.href = "login.html";
+    });
     return;
   }
 
@@ -73,8 +78,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     await sync.salvarTurno(turno);
     localStorage.setItem("turnoAtivo", `${hoje}_${agenteId}`); 
-    alert("Turno salvo com sucesso!");
-    window.location.href = "campo.html";
+    Swal.fire({
+      title: "Turno salvo com sucesso!",
+      icon: "success"
+    }).then(() => {
+      window.location.href = "campo.html";
+    });
   });
 });
 
