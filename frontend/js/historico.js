@@ -132,7 +132,11 @@ async function carregarHistorico() {
 
       } catch (err) {
         console.error("Erro ao sincronizar:", err);
-        alert(`Erro ao sincronizar:\n\n${err.message}`);
+        Swal.fire({
+          title: "Erro ao sincronizar",
+          text: `Erro ao sincronizar:\n\n${err.message}`,
+          icon: "error"
+        });
         btn.disabled    = false;
         btn.textContent = "🔄 Sincronizar";
       }
@@ -149,7 +153,11 @@ async function carregarHistorico() {
         await gerarPDF(turno, turno.resumo || {}, registros);
       } catch (err) {
         console.error("Erro ao gerar PDF:", err);
-        alert("Erro ao gerar PDF.");
+        Swal.fire({
+          title: "Erro ao gerar PDF",
+          text: "Houve um erro ao gerar o PDF. Tente novamente.",
+          icon: "error"
+        });
       }
     });
 

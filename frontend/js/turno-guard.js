@@ -9,7 +9,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     .first();
 
   if (!turnoAtivo) {
-    alert("Não há turno ativo. Cadastre um novo turno.");
-    window.location.href = "turno.html";
+    Swal.fire({
+      title: "Nenhum turno ativo",
+      text: "Não há turno ativo para registrar imóveis.\nFaça login e inicie um turno para acessar esta página.",
+      icon: "warning"
+    }).then(() => {
+      window.location.href = "turno.html";
+    });
   }
 });

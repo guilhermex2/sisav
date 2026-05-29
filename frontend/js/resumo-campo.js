@@ -312,8 +312,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     // 1️⃣ Valida turno ativo
     const dataTurnoAtivo = localStorage.getItem("turnoAtivo");
     if (!dataTurnoAtivo) {
-      alert("Nenhum turno ativo encontrado.");
-      window.location.href = "turno.html";
+      Swal.fire({
+        title: "Nenhum turno ativo",
+        text: "Não há turno ativo para registrar imóveis.\nFaça login e inicie um turno para acessar esta página.",
+        icon: "warning"
+      }).then(() => {
+        window.location.href = "turno.html";
+      });
       return;
     }
 
@@ -321,8 +326,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     const turno = await db.turnos.get({ data, agenteId });
 
     if (!turno) {
-      alert("Turno não encontrado.");
-      window.location.href = "turno.html";
+      Swal.fire({
+        title: "Turno não encontrado",
+        text: "O turno ativo não foi encontrado.\nFaça login e inicie um turno para acessar esta página.",
+        icon: "warning"
+      }).then(() => {
+        window.location.href = "turno.html";
+      });
       return;
     }
 
@@ -385,9 +395,11 @@ document.addEventListener("DOMContentLoaded", async () => {
           console.log("✅ Turno finalizado na API.");
         } catch (erroAPI) {
           console.warn("⚠️ Erro ao finalizar na API:", erroAPI);
-          alert(
-            `Turno salvo localmente, mas houve erro ao sincronizar:\n\n${erroAPI.message}\n\nOs dados estão seguros no dispositivo.`
-          );
+          Swal.fire({
+            title: "Erro ao finalizar turno",
+            text: `Turno salvo localmente, mas houve erro ao sincronizar:\n\n${erroAPI.message}\n\nOs dados estão seguros no dispositivo.`,
+            icon: "error"
+          });
         }
 
         // Gera PDF (só registros normais)
@@ -402,12 +414,20 @@ document.addEventListener("DOMContentLoaded", async () => {
         statusText.textContent   = "Concluído";
         btnFinalizar.textContent = "✓ Turno Finalizado";
 
-        alert("Turno finalizado com sucesso!");
-        window.location.href = "turno.html";
+        Swal.fire({
+          title: "Turno finalizado com sucesso!",
+          icon: "success"
+        }).then(() => {
+          window.location.href = "turno.html";
+        });
 
       } catch (err) {
         console.error("Erro ao finalizar turno:", err);
-        alert("Erro ao finalizar turno. Tente novamente.");
+        Swal.fire({
+          title: "Erro ao finalizar turno",
+          text: "Houve um erro ao finalizar o turno. Tente novamente.",
+          icon: "error"
+        });
         btnFinalizar.disabled    = false;
         btnFinalizar.textContent = "✓ Confirmar e Finalizar Turno";
       }
@@ -415,6 +435,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   } catch (err) {
     console.error("Erro no resumo:", err);
-    alert("Erro ao carregar resumo. Verifique o banco de dados.");
+    Swal.fire({
+      title: "Erro ao carregar resumo",
+      text: "Houve um erro ao carregar os dados do turno. Verifique o banco de dados.",
+      icon: "error"
+    });
   }
 });

@@ -59,7 +59,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const turnoExiste = await db.turnos.get({ data: hoje, agenteId });
     if (turnoExiste) {
-      alert("Já existe turno salvo nesta data!");
+      Swal.fire({
+        title: "Já existe turno salvo nesta data!",
+        icon: "warning"
+      });
       return;
     }
 
@@ -124,10 +127,12 @@ async function encerrarTurnoAnterior(dataTurno, turnoAtivoRaw) {
     localStorage.removeItem("turnoAtivo");
 
     // 4. Avisa o agente com contexto claro
-    alert(
-      `⚠️ Seu turno de ${dataTurno} não foi finalizado.\n` +
-      `Ele foi encerrado automaticamente pelo sistema.\n\n` +
-      `Cadastre o turno de hoje para continuar.`
-    );
+    Swal.fire({
+      title: "Turno encerrado automaticamente!",
+      text: `Seu turno de ${dataTurno} não foi finalizado.\n` +
+            `Ele foi encerrado automaticamente pelo sistema.\n\n` +
+            `Cadastre o turno de hoje para continuar.`,
+      icon: "warning"
+    });
   }
 }
