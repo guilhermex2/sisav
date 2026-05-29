@@ -20,10 +20,10 @@ mainRouter.patch("/sync/turnos/encerrar-automatico", autenticarToken, TurnoContr
 mainRouter.get("/imoveis-fechados", imovelFechadoController.listar)
 
 // POST /imoveis-fechados/:id/tentativa
-mainRouter.post("/:id/tentativa", imovelFechadoController.registrarTentativa)
+mainRouter.post("/imoveis-fechados/:id/tentativa", imovelFechadoController.registrarTentativa)
 
 // PATCH /imoveis-fechados/:id/recuperar
-mainRouter.patch("/:id/recuperar", imovelFechadoController.recuperar)
+mainRouter.patch("/imoveis-fechados/:id/recuperar", imovelFechadoController.recuperar)
 
 //ADM
 mainRouter.post('/sync/dados', autenticarToken, syncController.syncDados)
