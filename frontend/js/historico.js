@@ -19,8 +19,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
+
 //  Carrega e exibe os PDFs salvos em historico_pdfs
-//
+// 
 
 async function carregarHistorico() {
   const lista    = document.getElementById("listaTurnos");
@@ -132,8 +133,9 @@ function criarCardComPDF(registro) {
   return card;
 }
 
+
 //  Card para turnos legados (dados ainda em db.registros)
-//  Exibidos apenas enquanto ainda existirem no IndexedDB
+//   Exibidos apenas enquanto ainda existirem no IndexedDB
 // 
 
 function criarCardLegado(turno) {
@@ -293,15 +295,12 @@ function criarCardLegado(turno) {
 
 
 //  Geração de PDF como Blob (sem disparar download diretamente)
-//
+// 
 
 function gerarPDFBlob(turno, resumo, registros) {
   const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-  const W   = pdf.internal.pageSize.getWidth();
-  const H   = pdf.internal.pageSize.getHeight();
-  const M   = 12;
 
+  // ── Cores do design 
   const NAVY      = [26,  58,  92];
   const NAVY_MID  = [30,  73, 118];
   const NAVY_DARK = [15,  35,  60];
@@ -321,9 +320,20 @@ function gerarPDFBlob(turno, resumo, registros) {
   const MUTED     = [100,116,139];
   const BORDER    = [203,213,225];
 
+  const dataFmt = new Date(turno.data).toLocaleDateString("pt-BR");
+
+  
+  // PÁGINA 1 — RESUMO (portrait A4, 210×297 mm)
+  // 
+  const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const W1  = pdf.internal.pageSize.getWidth();
+  const H1  = pdf.internal.pageSize.getHeight();
+  const M   = 12;
+
+  //  Helper: cabeçalho de seção 
   function sectionHeader(y, label, color = NAVY) {
     pdf.setFillColor(...color);
-    pdf.rect(M, y, W - M * 2, 7, "F");
+    pdf.rect(M, y, W1 - M * 2, 7, "F");
     pdf.setTextColor(...WHITE);
     pdf.setFontSize(7);
     pdf.setFont("helvetica", "bold");
@@ -332,18 +342,19 @@ function gerarPDFBlob(turno, resumo, registros) {
     return y + 7;
   }
 
+  // Helper: célula de valor 
   function fieldCell(x, y, w, h, label, value, style = "default") {
     pdf.setFontSize(6);
     pdf.setFont("helvetica", "bold");
     pdf.setTextColor(...MUTED);
     pdf.text(String(label).toUpperCase(), x, y - 1);
     const fills = {
-      default: { bg: SLATE_BG,  bd: BORDER,         tx: NAVY_DARK  },
-      accent:  { bg: BLUE_BG,   bd: BLUE_BD,         tx: BLUE_TXT   },
-      teal:    { bg: TEAL_BG,   bd: [94,234,212],    tx: TEAL_TXT   },
-      dark:    { bg: NAVY_DARK, bd: NAVY_DARK,        tx: WHITE      },
-      red:     { bg: RED_BG,    bd: [252,165,165],   tx: RED_TXT    },
-      amber:   { bg: AMBER_BG,  bd: [253,224,71],    tx: AMBER_TXT  },
+      default: { bg: SLATE_BG,  bd: BORDER,           tx: NAVY_DARK  },
+      accent:  { bg: BLUE_BG,   bd: BLUE_BD,           tx: BLUE_TXT   },
+      teal:    { bg: TEAL_BG,   bd: [94, 234, 212],    tx: TEAL_TXT   },
+      dark:    { bg: NAVY_DARK, bd: NAVY_DARK,          tx: WHITE      },
+      red:     { bg: RED_BG,    bd: [252, 165, 165],   tx: RED_TXT    },
+      amber:   { bg: AMBER_BG,  bd: [253, 224, 71],    tx: AMBER_TXT  },
     };
     const s = fills[style] || fills.default;
     pdf.setFillColor(...s.bg);
@@ -357,134 +368,150 @@ function gerarPDFBlob(turno, resumo, registros) {
     pdf.setTextColor(0, 0, 0);
   }
 
-  function addFooter(pageNum, totalPages) {
-    pdf.setFontSize(6.5);
-    pdf.setTextColor(...MUTED);
-    pdf.text(
-      `SISAV · Relatório Diário · ${new Date(turno.data).toLocaleDateString("pt-BR")}`,
-      M, H - 5
-    );
-    pdf.text(`Página ${pageNum} de ${totalPages}`, W - M, H - 5, { align: "right" });
-    pdf.setTextColor(0, 0, 0);
+  //  Helper: rodapé 
+  function addFooter(doc, pageNum, totalPages, pageH, pageW) {
+    doc.setFontSize(6.5);
+    doc.setTextColor(...MUTED);
+    doc.text(`SISAV · Relatorio Diario · ${dataFmt}`, M, pageH - 5);
+    doc.text(`Pagina ${pageNum} de ${totalPages}`, pageW - M, pageH - 5, { align: "right" });
+    doc.setTextColor(0, 0, 0);
   }
 
-  // ── HEADER ──
+  // HEADER 
   pdf.setFillColor(...NAVY);
-  pdf.rect(0, 0, W, 26, "F");
+  pdf.rect(0, 0, W1, 26, "F");
   pdf.setTextColor(...WHITE);
   pdf.setFontSize(6.5);
   pdf.setFont("helvetica", "normal");
-  pdf.text("SISAV · SERVIÇO ANTIVETORIAL", M, 7);
+  pdf.text("SISAV - SERVICO ANTIVETORIAL", M, 7);
   pdf.setFontSize(13);
   pdf.setFont("helvetica", "bold");
   pdf.text("Resumo do Trabalho de Campo", M, 14);
 
-  const statusLabel = turno.finalizadoEm ? "CONCLUÍDO" : "EM ANDAMENTO";
-  const statusColor = turno.finalizadoEm ? TEAL : [217,119,6];
+  const statusLabel = turno.finalizadoEm ? "CONCLUIDO" : "EM ANDAMENTO";
+  const statusColor = turno.finalizadoEm ? TEAL : [217, 119, 6];
   pdf.setFillColor(...statusColor);
-  pdf.roundedRect(W - M - 32, 8, 32, 8, 2, 2, "F");
+  pdf.roundedRect(W1 - M - 34, 7, 34, 9, 2, 2, "F");
   pdf.setFontSize(6.5);
   pdf.setFont("helvetica", "bold");
-  pdf.text(statusLabel, W - M - 16, 13, { align: "center" });
+  pdf.setTextColor(...WHITE);
+  pdf.text(statusLabel, W1 - M - 17, 13, { align: "center" });
 
   pdf.setTextColor(191, 219, 254);
   pdf.setFontSize(7);
   pdf.setFont("helvetica", "normal");
-  const dataFmt = new Date(turno.data).toLocaleDateString("pt-BR");
-  pdf.text(`${dataFmt}  ·  ${turno.localidade || "—"}  ·  ${turno.nomeAgente || turno.agente || "—"}`, M, 22);
+  pdf.text(`${dataFmt}  |  ${turno.localidade || "-"}  |  ${turno.nomeAgente || turno.agente || "-"}`, M, 22);
   pdf.setTextColor(0, 0, 0);
 
   let y = 32;
 
-  // ── BLOCO 1 ──
-  y = sectionHeader(y, "🏘  Nº IMÓVEIS TRABALHADOS POR TIPO");
+  //  BLOCO 1: Nº Imóveis por tipo 
+  y = sectionHeader(y, "IMOVEIS TRABALHADOS POR TIPO");
   y += 6;
-  const tipoLabels = ["Residência", "Comércio", "TB", "PE", "Outra", "Total"];
+
+  const tipoLabels = ["Residencia", "Comercio", "TB", "PE", "Outra", "Total"];
   const tipoValues = [
-    resumo.imoveis?.residencia ?? 0, resumo.imoveis?.comercio ?? 0,
-    resumo.imoveis?.tb ?? 0,         resumo.imoveis?.pe ?? 0,
-    resumo.imoveis?.outra ?? 0,      resumo.imoveis?.total ?? 0,
+    resumo.imoveis.residencia, resumo.imoveis.comercio,
+    resumo.imoveis.tb, resumo.imoveis.pe, resumo.imoveis.outra,
+    resumo.imoveis.total,
   ];
-  const tipoStyles = ["accent","accent","accent","accent","accent","dark"];
-  const colW1 = (W - M * 2 - 2) / 6;
+  const tipoStyles = ["accent", "accent", "accent", "accent", "accent", "dark"];
+  const colW1 = (W1 - M * 2 - 2) / 6;
   const cellH = 9;
+
   tipoLabels.forEach((lbl, i) => {
     fieldCell(M + i * colW1, y, colW1 - 1, cellH, lbl, tipoValues[i], tipoStyles[i]);
   });
+
   y += cellH + 2;
   pdf.setFontSize(6);
   pdf.setTextColor(...MUTED);
   pdf.setFont("helvetica", "normal");
-  pdf.text("TB – Terreno baldio    PE – Ponto estratégico", M, y);
+  pdf.text("TB - Terreno baldio    PE - Ponto estrategico", M, y);
   pdf.setTextColor(0, 0, 0);
   y += 6;
 
-  // ── BLOCO 2 ──
-  y = sectionHeader(y, "📋  SITUAÇÃO DOS IMÓVEIS & PENDÊNCIAS", NAVY_MID);
+  //  BLOCO 2: Situação & Pendências 
+  y = sectionHeader(y, "SITUACAO DOS IMOVEIS & PENDENCIAS", NAVY_MID);
   y += 6;
-  const BW   = W - M * 2;
+
+  const BW    = W1 - M * 2;
   const col2A = BW * 0.54;
   const col2B = BW * 0.22;
   const col2C = BW * 0.24;
   const xB    = M + col2A + 2;
   const xC    = xB + col2B + 2;
   const rowH2 = 9;
-  pdf.setFontSize(6); pdf.setFont("helvetica", "bold"); pdf.setTextColor(...MUTED);
-  pdf.text("Nº IMÓVEIS", M, y - 1);
+
+  pdf.setFontSize(6);
+  pdf.setFont("helvetica", "bold");
+  pdf.setTextColor(...MUTED);
+  pdf.text("N IMOVEIS", M, y - 1);
   pdf.text("TUBITOS / AMOSTRAS", xB, y - 1);
-  pdf.text("PENDÊNCIA", xC, y - 1);
+  pdf.text("PENDENCIA", xC, y - 1);
   pdf.setTextColor(0, 0, 0);
+
   const halfA = (col2A - 2) / 2;
-  fieldCell(M,         y,            halfA - 1, rowH2, "Trat. Focal",     resumo.tratFocal    ?? 0, "default");
-  fieldCell(M + halfA, y,            halfA - 1, rowH2, "Trat. Perifocal", resumo.tratPerifocal ?? 0, "default");
-  fieldCell(M,         y + rowH2 + 2, halfA - 1, rowH2, "Inspecionados",  resumo.inspecionados ?? 0, "accent");
-  fieldCell(M + halfA, y + rowH2 + 2, halfA - 1, rowH2, "Recuperados",   resumo.recuperados   ?? 0, "teal");
+  fieldCell(M,          y,             halfA - 1, rowH2, "Trat. Focal",     resumo.tratFocal     ?? 0, "default");
+  fieldCell(M + halfA,  y,             halfA - 1, rowH2, "Trat. Perifocal", resumo.tratPerifocal ?? 0, "default");
+  fieldCell(M,          y + rowH2 + 2, halfA - 1, rowH2, "Inspecionados",   resumo.inspecionados ?? 0, "accent");
+  fieldCell(M + halfA,  y + rowH2 + 2, halfA - 1, rowH2, "Recuperados",     resumo.recuperados   ?? 0, "teal");
+
   const tubitosH = rowH2 * 2 + 2;
-  pdf.setFillColor(...SLATE_BG); pdf.setDrawColor(...BORDER); pdf.setLineWidth(0.3);
+  pdf.setFillColor(...SLATE_BG);
+  pdf.setDrawColor(...BORDER);
+  pdf.setLineWidth(0.3);
   pdf.rect(xB, y, col2B - 2, tubitosH, "FD");
-  pdf.setTextColor(...NAVY_DARK); pdf.setFontSize(16); pdf.setFont("helvetica", "bold");
+  pdf.setTextColor(...NAVY_DARK);
+  pdf.setFontSize(16);
+  pdf.setFont("helvetica", "bold");
   pdf.text(String(resumo.tubitos ?? 0), xB + (col2B - 2) / 2, y + tubitosH / 2 + 2, { align: "center" });
-  pdf.setFontSize(5.5); pdf.setFont("helvetica", "normal"); pdf.setTextColor(...MUTED);
+  pdf.setFontSize(5.5);
+  pdf.setFont("helvetica", "normal");
+  pdf.setTextColor(...MUTED);
   pdf.text("COLETADAS", xB + (col2B - 2) / 2, y + tubitosH - 2, { align: "center" });
   pdf.setTextColor(0, 0, 0);
-  fieldCell(xC, y,            col2C - 1, rowH2, "Recusa",   resumo.pendRecusa   ?? 0, "red");
+
+  fieldCell(xC, y,             col2C - 1, rowH2, "Recusa",   resumo.pendRecusa   ?? 0, "red");
   fieldCell(xC, y + rowH2 + 2, col2C - 1, rowH2, "Fechados", resumo.pendFechados ?? 0, "amber");
   y += tubitosH + 6;
 
-  // ── BLOCO 3 ──
-  y = sectionHeader(y, "🧪  DEPÓSITOS");
+  //  BLOCO 3: Depósitos
+  y = sectionHeader(y, "DEPOSITOS");
   pdf.autoTable({
-    startY: y, margin: { left: M, right: M },
+    startY: y,
+    margin: { left: M, right: M },
     head: [
       [
         { content: "Eliminado", rowSpan: 2, styles: { valign: "middle" } },
-        { content: "Tratados — Larvicida", colSpan: 3, styles: { halign: "center" } },
+        { content: "Tratados - Larvicida", colSpan: 3, styles: { halign: "center" } },
       ],
       ["Tipo", "Qtde. (gramas)", "Qtde. dep. trat."],
     ],
     body: [[
       resumo.depEliminado ?? 0,
-      (resumo.larvQtdeDep ?? 0) > 0 ? "Temefós" : "—",
+      (resumo.larvQtdeDep ?? 0) > 0 ? "Temefos" : "-",
       resumo.larvQtdeGramas ?? 0,
       resumo.larvQtdeDep ?? 0,
     ]],
-    styles:      { fontSize: 7.5, cellPadding: 3, halign: "center", valign: "middle" },
-    headStyles:  { fillColor: [248,250,252], textColor: MUTED, fontStyle: "bold", fontSize: 6.5, lineColor: BORDER, lineWidth: 0.3 },
-    bodyStyles:  { fillColor: SLATE_BG, fontStyle: "bold", lineColor: BORDER, lineWidth: 0.3 },
+    styles:     { fontSize: 7.5, cellPadding: 3, halign: "center", valign: "middle" },
+    headStyles: { fillColor: [248,250,252], textColor: MUTED, fontStyle: "bold", fontSize: 6.5, lineColor: BORDER, lineWidth: 0.3 },
+    bodyStyles: { fillColor: SLATE_BG, fontStyle: "bold", lineColor: BORDER, lineWidth: 0.3 },
     columnStyles: { 0:{cellWidth:30}, 1:{cellWidth:40}, 2:{cellWidth:50}, 3:{cellWidth:50} },
     tableLineColor: BORDER, tableLineWidth: 0.3,
   });
   y = pdf.lastAutoTable.finalY + 4;
 
-  // ── BLOCO 4 ──
-  y = sectionHeader(y, "📦  Nº DEPÓSITOS INSPECIONADOS POR TIPO", SLATE334);
+  // BLOCO 4: Nº Depósitos por tipo 
+  y = sectionHeader(y, "N DEPOSITOS INSPECIONADOS POR TIPO", SLATE334);
   pdf.autoTable({
-    startY: y, margin: { left: M, right: M },
-    head: [["A1","A2","B","C","D1","D2","E","Total"]],
+    startY: y,
+    margin: { left: M, right: M },
+    head: [["A1", "A2", "B", "C", "D1", "D2", "E", "Total"]],
     body: [[
-      resumo.depTipo?.a1 ?? 0, resumo.depTipo?.a2 ?? 0, resumo.depTipo?.b ?? 0,
-      resumo.depTipo?.c  ?? 0, resumo.depTipo?.d1 ?? 0, resumo.depTipo?.d2 ?? 0,
-      resumo.depTipo?.e  ?? 0, resumo.depTipo?.total ?? 0,
+      resumo.depTipo.a1 ?? 0, resumo.depTipo.a2 ?? 0, resumo.depTipo.b ?? 0,
+      resumo.depTipo.c  ?? 0, resumo.depTipo.d1 ?? 0, resumo.depTipo.d2 ?? 0,
+      resumo.depTipo.e  ?? 0, resumo.depTipo.total ?? 0,
     ]],
     styles:     { fontSize: 8, cellPadding: 3, halign: "center", valign: "middle" },
     headStyles: { fillColor: [248,250,252], textColor: MUTED, fontStyle: "bold", fontSize: 7, lineColor: BORDER, lineWidth: 0.3 },
@@ -494,15 +521,17 @@ function gerarPDFBlob(turno, resumo, registros) {
   });
   y = pdf.lastAutoTable.finalY + 4;
 
-  // ── BLOCO 5 ──
-  y = sectionHeader(y, "🗺  QUARTEIRÕES", SLATE334);
+  //  BLOCO 5: Quarteirões 
+  y = sectionHeader(y, "QUARTEIRAO", SLATE334);
   y += 3;
 
   function quartRow(startY, label, valores, colorBg, colorBd, colorTx) {
-    pdf.setFontSize(6); pdf.setFont("helvetica", "bold"); pdf.setTextColor(...MUTED);
+    pdf.setFontSize(6);
+    pdf.setFont("helvetica", "bold");
+    pdf.setTextColor(...MUTED);
     pdf.text(label.toUpperCase(), M, startY);
     startY += 2;
-    const qW  = (W - M * 2) / 10;
+    const qW  = (W1 - M * 2) / 10;
     const qH  = 7;
     const all = [...(valores || []), ...Array(20).fill("")].slice(0, 20);
     [0, 1].forEach(row => {
@@ -515,7 +544,8 @@ function gerarPDFBlob(turno, resumo, registros) {
         pdf.rect(M + col * qW, startY + row * (qH + 0.5), qW, qH, "FD");
         if (hasFill) {
           pdf.setTextColor(...colorTx);
-          pdf.setFontSize(6.5); pdf.setFont("helvetica", "bold");
+          pdf.setFontSize(6.5);
+          pdf.setFont("helvetica", "bold");
           pdf.text(String(val), M + col * qW + qW / 2, startY + row * (qH + 0.5) + qH / 2 + 2, { align: "center" });
           pdf.setTextColor(0, 0, 0);
         }
@@ -524,51 +554,70 @@ function gerarPDFBlob(turno, resumo, registros) {
     return startY + 2 * (qH + 0.5) + 4;
   }
 
-  y = quartRow(y, "Nº e seq. dos quarteirões trabalhados",
-    resumo.quartTrabalhados, BLUE_BG, BLUE_BD, BLUE_TXT);
-  y = quartRow(y, "Nº e seq. dos quarteirões concluídos",
-    resumo.quartConcluidos, TEAL_BG, [94,234,212], TEAL_TXT);
+  y = quartRow(y, "N e seq. dos quarteiraos trabalhados", resumo.quartTrabalhados, BLUE_BG, BLUE_BD, BLUE_TXT);
+  y = quartRow(y, "N e seq. dos quarteiraos concluidos",  resumo.quartConcluidos,  TEAL_BG, [94,234,212], TEAL_TXT);
 
-  // ── PÁGINA 2+: Tabela de imóveis ──
-  pdf.addPage();
+  //  Rodapés página 1 
+  // (total de páginas só é calculado após a tabela, então voltamos depois)
+
+  
+  // PÁGINA 2+ — TABELA DE IMÓVEIS (landscape A4, 297×210 mm)
+  // Página separada com orientação diferente via addPage
+  // 
+  pdf.addPage("a4", "landscape");
+  const W2 = pdf.internal.pageSize.getWidth();   // 297 mm
+  const H2 = pdf.internal.pageSize.getHeight();  // 210 mm
+  const M2 = 8;
+
+  // Mini-header
   pdf.setFillColor(...NAVY);
-  pdf.rect(0, 0, W, 14, "F");
+  pdf.rect(0, 0, W2, 14, "F");
   pdf.setTextColor(...WHITE);
-  pdf.setFontSize(9); pdf.setFont("helvetica", "bold");
-  pdf.text("SISAV — Tabela de Imóveis Registrados", M, 9);
-  pdf.setFontSize(7); pdf.setFont("helvetica", "normal"); pdf.setTextColor(191, 219, 254);
+  pdf.setFontSize(9);
+  pdf.setFont("helvetica", "bold");
+  pdf.text("SISAV - Tabela de Imoveis Registrados", M2, 9);
+  pdf.setFontSize(7);
+  pdf.setFont("helvetica", "normal");
+  pdf.setTextColor(191, 219, 254);
   pdf.text(
-    `${dataFmt}  ·  ${turno.localidade || "—"}  ·  ${turno.nomeAgente || turno.agente || "—"}  ·  ${registros.length} registro(s)`,
-    W - M, 9, { align: "right" }
+    `${dataFmt}  |  ${turno.localidade || "-"}  |  ${turno.nomeAgente || turno.agente || "-"}  |  ${registros.length} registro(s)`,
+    W2 - M2, 9, { align: "right" }
   );
   pdf.setTextColor(0, 0, 0);
 
   function rowStyle(r) {
     const tipo = String(r.tipo_imovel || "").toUpperCase();
-    const info = String(r.informacao || "").toLowerCase();
-    if (info.includes("recusa"))  return { fillColor: [255,241,242] };
-    if (tipo.endsWith("-F"))      return { fillColor: [255,253,232] };
-    if (r.is_recuperacao)         return { fillColor: [240,253,244] };
-    return {};
+    const info = String(r.informacao  || "").toLowerCase();
+    if (info.includes("recusa"))  return [255, 241, 242];
+    if (tipo.endsWith("-F"))      return [255, 253, 232];
+    if (r.is_recuperacao)         return [240, 253, 244];
+    return null;
   }
 
+  // Largura total útil em landscape: 297 - 2*8 = 281 mm
+  // 24 colunas distribuídas para caber exatamente
   pdf.autoTable({
-    startY: 17,
-    margin: { left: M, right: M },
+    startY: 16,
+    margin: { left: M2, right: M2 },
     head: [
       [
-        { content: "Identificação do Imóvel", colSpan: 9, styles: { halign: "center", fillColor: [15,41,66], textColor: [147,197,253] } },
-        { content: "Depósitos Inspecionados",  colSpan: 7, styles: { halign: "center", fillColor: [15,41,66], textColor: [147,197,253] } },
-        { content: "Amostras / Tubitos",       colSpan: 4, styles: { halign: "center", fillColor: [15,41,66], textColor: [147,197,253] } },
-        { content: "Larvicida (Trat. Focal)",  colSpan: 3, styles: { halign: "center", fillColor: [15,41,66], textColor: [147,197,253] } },
-        { content: "Obs.",                     colSpan: 1, styles: { halign: "center", fillColor: [15,41,66], textColor: [147,197,253] } },
+        { content: "Identificacao do Imovel", colSpan: 8,  styles: { halign: "center", fillColor: [15,41,66], textColor: [147,197,253] } },
+        { content: "Depositos Inspecionados",  colSpan: 7,  styles: { halign: "center", fillColor: [15,41,66], textColor: [147,197,253] } },
+        { content: "Amostras / Tubitos",       colSpan: 4,  styles: { halign: "center", fillColor: [15,41,66], textColor: [147,197,253] } },
+        { content: "Larvicida (Trat. Focal)",  colSpan: 3,  styles: { halign: "center", fillColor: [15,41,66], textColor: [147,197,253] } },
+        { content: "Observacao",               colSpan: 1,  styles: { halign: "center", fillColor: [15,41,66], textColor: [147,197,253] } },
       ],
       [
-        "#","Quarteirão","Lado","Logradouro","Nº","Seq.","Compl.","Tipo","Horário",
-        "A1","A2","B","C","D1","D2","E",
-        "D.Elim","T.Perif.","Tb.Inic.","Tb.Fin.",
-        "T.Focal","Larv.(g)","D.Trat.",
-        "Informação",
+        // Identificação: 8 cols (#, Qrt, Lado, Logradouro, Nº, Seq, Compl, Tipo, Hor) → removemos Horário do grupo pois estava sobrando
+        "#", "Qrt.", "Lado", "Logradouro", "Nr", "Seq", "Tipo", "Horario",
+        // Depósitos: 7
+        "A1", "A2", "B", "C", "D1", "D2", "E",
+        // Amostras: 4
+        "D.Elim", "T.Per.", "Tb.In.", "Tb.Fin.",
+        // Larvicida: 3
+        "T.Foc.", "Larv.g", "D.Tr.",
+        // Obs: 1
+        "Informacao",
       ],
     ],
     body: registros.map((r, i) => [
@@ -578,7 +627,6 @@ function gerarPDFBlob(turno, resumo, registros) {
       r.logradouro        || "-",
       r.numero            || "-",
       r.sequencia         || "-",
-      r.complemento       || "-",
       r.tipo_imovel       || "-",
       r.horario_entrada   || "-",
       r.a1 ?? "-", r.a2 ?? "-", r.b ?? "-", r.c ?? "-",
@@ -592,50 +640,68 @@ function gerarPDFBlob(turno, resumo, registros) {
       r.qtd_dep_trat      ?? "-",
       r.informacao        || "-",
     ]),
-    styles:     { fontSize: 5.5, cellPadding: 1.5, halign: "center", valign: "middle", overflow: "ellipsize", lineColor: BORDER, lineWidth: 0.2 },
-    headStyles: { fillColor: NAVY, textColor: WHITE, fontStyle: "bold", fontSize: 5.5, halign: "center", lineColor: BORDER, lineWidth: 0.2 },
-    alternateRowStyles: { fillColor: [248,249,250] },
+    styles: {
+      fontSize: 6,
+      cellPadding: 1.8,
+      halign: "center",
+      valign: "middle",
+      overflow: "ellipsize",
+      lineColor: BORDER,
+      lineWidth: 0.2,
+    },
+    headStyles: {
+      fillColor: NAVY,
+      textColor: WHITE,
+      fontStyle: "bold",
+      fontSize: 6,
+      halign: "center",
+      lineColor: BORDER,
+      lineWidth: 0.2,
+    },
+    alternateRowStyles: { fillColor: [248, 249, 250] },
     bodyStyles: { lineColor: BORDER, lineWidth: 0.2 },
     columnStyles: {
-      0:  { cellWidth: 5,     halign: "center" },
-      1:  { cellWidth: 13,    halign: "center" },
-      2:  { cellWidth: 8,     halign: "center" },
-      3:  { cellWidth: 28,    halign: "left"   },
-      4:  { cellWidth: 8,     halign: "center" },
-      5:  { cellWidth: 7,     halign: "center" },
-      6:  { cellWidth: 12,    halign: "center" },
-      7:  { cellWidth: 10,    halign: "center" },
-      8:  { cellWidth: 10,    halign: "center" },
-      9:  { cellWidth: 6,     halign: "center" },
-      10: { cellWidth: 6,     halign: "center" },
-      11: { cellWidth: 6,     halign: "center" },
-      12: { cellWidth: 6,     halign: "center" },
-      13: { cellWidth: 6,     halign: "center" },
-      14: { cellWidth: 6,     halign: "center" },
-      15: { cellWidth: 6,     halign: "center" },
-      16: { cellWidth: 8,     halign: "center" },
-      17: { cellWidth: 8,     halign: "center" },
-      18: { cellWidth: 8,     halign: "center" },
-      19: { cellWidth: 8,     halign: "center" },
-      20: { cellWidth: 8,     halign: "center" },
-      21: { cellWidth: 8,     halign: "center" },
-      22: { cellWidth: 8,     halign: "center" },
-      23: { cellWidth: "auto", halign: "left"  },
+      0:  { cellWidth: 6,    halign: "center" }, // #
+      1:  { cellWidth: 12,   halign: "center" }, // Qrt.
+      2:  { cellWidth: 8,    halign: "center" }, // Lado
+      3:  { cellWidth: 38,   halign: "left"   }, // Logradouro — mais espaço
+      4:  { cellWidth: 9,    halign: "center" }, // Nr
+      5:  { cellWidth: 8,    halign: "center" }, // Seq
+      6:  { cellWidth: 10,   halign: "center" }, // Tipo
+      7:  { cellWidth: 13,   halign: "center" }, // Horario
+      8:  { cellWidth: 8,    halign: "center" }, // A1
+      9:  { cellWidth: 8,    halign: "center" }, // A2
+      10: { cellWidth: 8,    halign: "center" }, // B
+      11: { cellWidth: 8,    halign: "center" }, // C
+      12: { cellWidth: 8,    halign: "center" }, // D1
+      13: { cellWidth: 8,    halign: "center" }, // D2
+      14: { cellWidth: 8,    halign: "center" }, // E
+      15: { cellWidth: 10,   halign: "center" }, // D.Elim
+      16: { cellWidth: 9,    halign: "center" }, // T.Per.
+      17: { cellWidth: 9,    halign: "center" }, // Tb.In.
+      18: { cellWidth: 9,    halign: "center" }, // Tb.Fin.
+      19: { cellWidth: 9,    halign: "center" }, // T.Foc.
+      20: { cellWidth: 9,    halign: "center" }, // Larv.g
+      21: { cellWidth: 9,    halign: "center" }, // D.Tr.
+      22: { cellWidth: "auto", halign: "left" }, // Informacao — ocupa o restante
     },
     willDrawCell: (data) => {
       if (data.section !== "body") return;
       const r = registros[data.row.index];
       if (!r) return;
-      const s = rowStyle(r);
-      if (s.fillColor) data.cell.styles.fillColor = s.fillColor;
+      const fc = rowStyle(r);
+      if (fc) data.cell.styles.fillColor = fc;
     },
   });
 
-  // Rodapés em todas as páginas
+  //  Rodapés em todas as páginas 
   const totalPages = pdf.internal.getNumberOfPages();
   for (let p = 1; p <= totalPages; p++) {
     pdf.setPage(p);
-    addFooter(p, totalPages);
+    const isLandscape = p > 1;
+    const pH = isLandscape ? H2 : H1;
+    const pW = isLandscape ? W2 : W1;
+    addFooter(pdf, p, totalPages, pH, pW);
   }
 
   return pdf.output("blob");
