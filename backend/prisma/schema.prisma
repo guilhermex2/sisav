@@ -171,5 +171,9 @@ enum TipoVisita {
   NORMAL
   R_F
   C_F
+  TB_F
+  PE_F
+  O_F
+  RECUSA
   RECUPERACAO
 }

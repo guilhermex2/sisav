@@ -11,6 +11,21 @@ const dailyPerPage = 7;
 
 let editingIndex = null; // índice em allFieldData do registro sendo editado
 
+// ─── NORMALIZA O CAMPO "entrada" ───────────────────────────────────────────────
+// A API pode retornar diferentes formatos: "S"/"N", "s"/"n", 1/0, true/false,
+// "ABERTO"/"FECHADO", "SIM"/"NAO", etc.
+// Esta função sempre devolve "S" (conseguiu entrar) ou "N" (imóvel fechado).
+function normalizarEntrada(val) {
+  if (val === null || val === undefined || val === "") return null; // sem dado
+  const v = String(val).trim().toUpperCase();
+  // Valores que indicam "com entrada / inspecionado"
+  if (["S", "SIM", "1", "TRUE", "ABERTO", "INSPECIONADO", "OPEN"].includes(v)) return "S";
+  // Valores que indicam "fechado / sem entrada"
+  if (["N", "NAO", "NÃO", "0", "FALSE", "FECHADO", "CLOSED", "F"].includes(v)) return "N";
+  // Fallback: mantém o valor original para não perder dados
+  return v;
+}
+
 addEventListener("DOMContentLoaded", async () => {
 
   // ─── NAV / SIDEBAR ─────────────────────────────────────────────────────────
@@ -65,7 +80,14 @@ addEventListener("DOMContentLoaded", async () => {
   async function carregarVisitas() {
     const res  = await fetch("https://sisav-api.onrender.com/sisav/adm");
     const data = await res.json();
-    allFieldData = Array.isArray(data) ? data : (data.dados || []);
+    const raw  = Array.isArray(data) ? data : (data.dados || []);
+
+    // CORREÇÃO: normaliza o campo "entrada" em todos os registros logo ao carregar
+    allFieldData = raw.map(r => ({
+      ...r,
+      entrada: normalizarEntrada(r.entrada),
+    }));
+
     homeFiltered = [...allFieldData];
     homePage = 1;
     popularFiltrosHome();
@@ -185,7 +207,9 @@ addEventListener("DOMContentLoaded", async () => {
         <td>${r.horario ?? "?"}</td>
         <td class="num">${r.entrada === "S"
           ? '<span class="pill pill-green" style="font-size:10px">S</span>'
-          : '<span class="pill pill-red"   style="font-size:10px">N</span>'}</td>
+          : r.entrada === "N"
+            ? '<span class="pill pill-red" style="font-size:10px">N</span>'
+            : '<span class="pill pill-amber" style="font-size:10px">?</span>'}</td>
         <td class="num">${r.a1  ?? "?"}</td><td class="num">${r.a2  ?? "?"}</td>
         <td class="num">${r.b   ?? "?"}</td><td class="num">${r.c   ?? "?"}</td>
         <td class="num">${r.d1  ?? "?"}</td><td class="num">${r.d2  ?? "?"}</td>
@@ -310,6 +334,9 @@ addEventListener("DOMContentLoaded", async () => {
       console.warn("PATCH falhou:", err);
     }
 
+    // CORREÇÃO: normaliza o campo entrada ao salvar localmente também
+    const novaEntrada = normalizarEntrada(get("f-entrada") || r.entrada);
+
     const atualizado = {
       ...r,
       quarteirao: get("f-quarteirao") || r.quarteirao,
@@ -320,7 +347,7 @@ addEventListener("DOMContentLoaded", async () => {
       seq:        getNum("f-seq")     ?? r.seq,
       tipo:       get("f-tipo")       || r.tipo,
       horario:    get("f-horario")    || r.horario,
-      entrada:    get("f-entrada")    || r.entrada,
+      entrada:    novaEntrada,
       info:       get("f-info")       || r.info,
       a1:         getNum("f-a1")      ?? r.a1,
       a2:         getNum("f-a2")      ?? r.a2,
@@ -422,16 +449,20 @@ addEventListener("DOMContentLoaded", async () => {
 
       const m = mapa[chave];
 
-      if (r.entrada === "N") { m.fechados      += 1; }
-      else                   { m.inspecionados += 1; }
+      // CORREÇÃO: a entrada já foi normalizada em carregarVisitas().
+      // Conta como "fechado" apenas quando entrada === "N" explicitamente.
+      // Conta como "inspecionado" apenas quando entrada === "S" explicitamente.
+      // Registros com entrada null/undefined não são contados em nenhum dos dois.
+      if (r.entrada === "N")      { m.fechados      += 1; }
+      else if (r.entrada === "S") { m.inspecionados += 1; }
 
-      m.a1       += Number(r.a1       || 0);
-      m.a2       += Number(r.a2       || 0);
-      m.b        += Number(r.b        || 0);
-      m.c        += Number(r.c        || 0);
-      m.d1       += Number(r.d1       || 0);
-      m.d2       += Number(r.d2       || 0);
-      m.e        += Number(r.e        || 0);
+      m.a1         += Number(r.a1       || 0);
+      m.a2         += Number(r.a2       || 0);
+      m.b          += Number(r.b        || 0);
+      m.c          += Number(r.c        || 0);
+      m.d1         += Number(r.d1       || 0);
+      m.d2         += Number(r.d2       || 0);
+      m.e          += Number(r.e        || 0);
       m.eliminados += Number(r.elim     || 0);
       m.insp       += Number(r.insp     || 0);
       m.amostIni   += Number(r.amostIni || 0);
@@ -439,7 +470,9 @@ addEventListener("DOMContentLoaded", async () => {
       m.larvas     += Number(r.tubitos  || 0);
       m.queda      += Number(r.queda    || 0);
       m.depTrat    += Number(r.depTrat  || 0);
-      m.recuperados+= Number(r.depTrat  || 0);
+      // CORREÇÃO: recuperados deve vir de um campo próprio; aqui usamos depTrat
+      // como aproximação até que a API forneça um campo dedicado.
+      m.recuperados += Number(r.recuperados || r.depTrat || 0);
     });
 
     dailyData = Object.values(mapa).map(item => {
@@ -464,7 +497,6 @@ addEventListener("DOMContentLoaded", async () => {
   }
 
   // ─── FECHAMENTO SEMANAL ────────────────────────────────────────────────────
-  // Acumula os mesmos campos da tabela de Fechamento Diário, agrupados por agente.
   function gerarFechamentoSemanal(registros) {
     const mapa = {};
 
@@ -487,7 +519,7 @@ addEventListener("DOMContentLoaded", async () => {
           insp:          0,
           amostIni:      0,
           amostFin:      0,
-          larvas:        0,   // tubitos
+          larvas:        0,
           queda:         0,
           depTrat:       0,
           recuperados:   0,
@@ -497,8 +529,9 @@ addEventListener("DOMContentLoaded", async () => {
 
       const m = mapa[agente];
 
-      if (r.entrada === "N") { m.fechados      += 1; }
-      else                   { m.inspecionados += 1; }
+      // CORREÇÃO: mesma lógica do diário — só conta "S" ou "N" explícitos
+      if (r.entrada === "N")      { m.fechados      += 1; }
+      else if (r.entrada === "S") { m.inspecionados += 1; }
 
       m.a1         += Number(r.a1       || 0);
       m.a2         += Number(r.a2       || 0);
@@ -514,7 +547,7 @@ addEventListener("DOMContentLoaded", async () => {
       m.larvas     += Number(r.tubitos  || 0);
       m.queda      += Number(r.queda    || 0);
       m.depTrat    += Number(r.depTrat  || 0);
-      m.recuperados+= Number(r.depTrat  || 0);
+      m.recuperados += Number(r.recuperados || r.depTrat || 0);
 
       if (r.data && r.data !== "?") m.datas.add(r.data.trim());
     });
@@ -524,7 +557,6 @@ addEventListener("DOMContentLoaded", async () => {
       diasTrabalhados: a.datas.size,
     }));
 
-    // Linha de totais (exceto diasTrabalhados que exibe "—")
     const soma = campo => rows.reduce((s, r) => s + r[campo], 0);
 
     document.getElementById("weekly-tbody").innerHTML =
@@ -666,9 +698,10 @@ addEventListener("DOMContentLoaded", async () => {
 
     const tratFocal     = base.filter(r => r.a1 > 0 || r.a2 > 0 || r.b > 0).length;
     const tratPeriF     = base.filter(r => r.d1 > 0 || r.d2 > 0 || r.e > 0).length;
+    // CORREÇÃO: usa a entrada normalizada (já "S"/"N") para contar corretamente
     const inspecionados = base.filter(r => r.entrada === "S").length;
     const fechados      = base.filter(r => r.entrada === "N").length;
-    const recuperados   = base.reduce((s, r) => s + Number(r.depTrat || 0), 0);
+    const recuperados   = base.reduce((s, r) => s + Number(r.recuperados || r.depTrat || 0), 0);
     const totalTubitos  = base.reduce((s, r) => s + Number(r.tubitos || 0), 0);
     const recusa        = base.filter(r => r.info === "Atencao").length;
     const totalElim     = base.reduce((s, r) => s + Number(r.elim    || 0), 0);
@@ -841,7 +874,6 @@ addEventListener("DOMContentLoaded", async () => {
     win.document.close();
   };
 
-  // ─── EXPORT DAILY XLSX ─────────────────────────────────────────────────────
   window.exportDailyXLSX = function () {
     const headers = [
       "Data", "Agente",
@@ -865,7 +897,6 @@ addEventListener("DOMContentLoaded", async () => {
     XLSX.writeFile(wb, "SISAV_Fechamento_Diario.xlsx");
   };
 
-  // ─── EXPORT DAILY PDF ──────────────────────────────────────────────────────
   window.exportDailyPDF = function () {
     const win = window.open("", "_blank");
     const headers = [

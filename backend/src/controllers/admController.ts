@@ -55,6 +55,7 @@ export const getCampo = async (req: Request, res: Response) => {
             imovel: true
         }
         }) as VisitaComRelacoes[];
+    const TIPOS_FECHADO = ["R_F", "C_F", "TB_F", "PE_F", "O_F", "RECUSA"];
     const dados: CampoDTO[] = visitas.map((v) => ({
       id: v.id,
       data: v.turno.data.toLocaleDateString("pt-BR"),
@@ -73,7 +74,7 @@ export const getCampo = async (req: Request, res: Response) => {
           })
         : "—",
 
-      entrada: v.horarioEntrada ? "S" : "N",
+      entrada: TIPOS_FECHADO.includes(v.tipoVisita) ? "S" : "N",
 
       a1: v.a1,
       a2: v.a2,
@@ -122,7 +123,8 @@ export const getKpis = async (req: Request, res: Response) => {
       visitas.map(v => v.imovelId)
     ).size;
 
-    const totalFechados = visitas.filter(v => v.tipoVisita === "R_F").length;
+    const TIPOS_FECHADO = ["R_F", "C_F", "TB_F", "PE_F", "O_F", "RECUSA"];
+    const totalFechados = visitas.filter(v => TIPOS_FECHADO.includes(v.tipoVisita)).length;
 
     return res.json({
       totalRegistros,
