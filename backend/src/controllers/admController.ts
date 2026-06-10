@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { CampoDTO } from "../types/dto";
+import { Role } from "@prisma/client";
 type VisitaComRelacoes = {
   id: number;
   tipoVisita: string;
@@ -26,6 +27,7 @@ type VisitaComRelacoes = {
 
   agente: {
     nome: string;
+    role: Role;
   };
 
   turno: {
@@ -150,7 +152,11 @@ export const desempenhoSemanal = async (req: Request, res: Response) => {
 
     // Busca todos os agentes cadastrados e as visitas da semana em paralelo
     const [todosAgentes, visitas] = await Promise.all([
-      prisma.agente.findMany(),
+      prisma.agente.findMany({
+        where:{
+          role: Role.AGENTE
+        }
+      }),
       prisma.visita.findMany({
         where: {
           turno: {
