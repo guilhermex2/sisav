@@ -74,7 +74,7 @@ export const getCampo = async (req: Request, res: Response) => {
           })
         : "—",
 
-      entrada: TIPOS_FECHADO.includes(v.tipoVisita) ? "S" : "N",
+      entrada: TIPOS_FECHADO.includes(v.tipoVisita) ? "N" : "S",
 
       a1: v.a1,
       a2: v.a2,
