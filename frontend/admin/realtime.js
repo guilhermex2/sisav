@@ -5,6 +5,7 @@ function iniciarRealtime({ tabela, onInsert, onUpdate, onDelete }) {
       "postgres_changes",
       { event: "*", schema: "public", table: tabela },
       (payload) => {
+        console.log(`🔴 Evento recebido [${tabela}]:`, payload)
         if (payload.eventType === "INSERT" && onInsert) onInsert(payload.new);
         if (payload.eventType === "UPDATE" && onUpdate) onUpdate(payload.new);
         if (payload.eventType === "DELETE" && onDelete) onDelete(payload.old);
