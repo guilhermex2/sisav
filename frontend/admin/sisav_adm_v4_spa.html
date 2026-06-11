@@ -766,8 +766,10 @@ window.addEventListener('DOMContentLoaded', () => {
   // Visita → é o que alimenta a tabela de campo (home-tbody)
   iniciarRealtime({
     tabela: "Visita",
-    onInsert: async () => {
+    onInsert: async (visita) => {
+      console.log("🔴 Realtime INSERT Visita recebido:", visita);
       await carregarVisitas(); // aguarda a API retornar antes de renderizar
+      console.log("✅ carregarVisitas() concluído, total:", allFieldData.length)
       mostrarToast("📋 Nova visita registrada!");
     },
     onUpdate: async () => {
