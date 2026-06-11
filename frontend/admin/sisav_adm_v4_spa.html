@@ -761,45 +761,42 @@
 <script src="realtime.js"></script>
 <script src="sisav-adm.js"></script>
 <script>
-  // Aguarda o sisav-adm.js terminar de inicializar
-  window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', () => {
 
-    // Visita → recalcula tabela de campo + fechamento diário + semanal
-    iniciarRealtime({
-      tabela: "Visita",
-      onInsert: () => {
-        carregarVisitas();
-        mostrarToast("📋 Nova visita registrada!");
-      },
-      onUpdate: () => {
-        carregarVisitas();
-      },
-    });
-
-    // ImovelFechado → atualiza KPI "Fechados" e tabela de agentes
-    iniciarRealtime({
-      tabela: "ImovelFechado",
-      onInsert: () => {
-        carregarKpis();
-        carregarVisitas(); // recalcula fechamento diário/semanal
-        mostrarToast("🏠 Imóvel fechado registrado!");
-      },
-      onUpdate: () => {
-        carregarKpis();
-        carregarVisitas();
-      },
-    });
-
-    // Imovel → atualiza KPI "Total de imóveis"
-    iniciarRealtime({
-      tabela: "Imovel",
-      onInsert: () => {
-        carregarKpis();
-        mostrarToast("🏡 Novo imóvel adicionado!");
-      },
-    });
-
+  // Visita → é o que alimenta a tabela de campo (home-tbody)
+  iniciarRealtime({
+    tabela: "Visita",
+    onInsert: async () => {
+      await carregarVisitas(); // aguarda a API retornar antes de renderizar
+      mostrarToast("📋 Nova visita registrada!");
+    },
+    onUpdate: async () => {
+      await carregarVisitas();
+    },
   });
+
+  // ImovelFechado → atualiza KPIs e fechamento diário/semanal
+  iniciarRealtime({
+    tabela: "ImovelFechado",
+    onInsert: async () => {
+      await Promise.all([carregarKpis(), carregarVisitas()]);
+      mostrarToast("🏠 Imóvel fechado registrado!");
+    },
+    onUpdate: async () => {
+      await Promise.all([carregarKpis(), carregarVisitas()]);
+    },
+  });
+
+  // Imovel → só atualiza KPIs (para não recarregar toda a tabela de campo em cada edição)
+  iniciarRealtime({
+    tabela: "Imovel",
+    onInsert: async () => {
+      await carregarKpis();
+      mostrarToast("🏡 Novo imóvel adicionado!");
+    },
+  });
+
+});
 </script>
 </body>
 </html>
