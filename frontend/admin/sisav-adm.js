@@ -77,7 +77,7 @@ addEventListener("DOMContentLoaded", async () => {
   }
 
   // ─── CARREGAR DADOS ────────────────────────────────────────────────────────
-  async function carregarVisitas() {
+  window.carregarVisitas = async function() {
     const res  = await fetch("https://sisav-api.onrender.com/sisav/adm");
     const data = await res.json();
     const raw  = Array.isArray(data) ? data : (data.dados || []);
@@ -95,7 +95,7 @@ addEventListener("DOMContentLoaded", async () => {
     recalcularAgentes(); // diario + semanal a partir dos dados locais
   }
 
-  async function carregarKpis() {
+  window.carregarKpis = async function() {
     const res  = await fetch("https://sisav-api.onrender.com/sisav/adm/kpis");
     const data = await res.json();
     document.getElementById("kpi-total").textContent    = data.totalRegistros;

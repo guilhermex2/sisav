@@ -755,6 +755,50 @@
 <div class="toast" id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabaseClient.js"></script>
+<script src="realtime.js"></script>
 <script src="sisav-adm.js"></script>
+<script>
+  // Aguarda o sisav-adm.js terminar de inicializar
+  window.addEventListener('DOMContentLoaded', () => {
+
+    // Visita → recalcula tabela de campo + fechamento diário + semanal
+    iniciarRealtime({
+      tabela: "Visita",
+      onInsert: () => {
+        carregarVisitas();
+        mostrarToast("📋 Nova visita registrada!");
+      },
+      onUpdate: () => {
+        carregarVisitas();
+      },
+    });
+
+    // ImovelFechado → atualiza KPI "Fechados" e tabela de agentes
+    iniciarRealtime({
+      tabela: "ImovelFechado",
+      onInsert: () => {
+        carregarKpis();
+        carregarVisitas(); // recalcula fechamento diário/semanal
+        mostrarToast("🏠 Imóvel fechado registrado!");
+      },
+      onUpdate: () => {
+        carregarKpis();
+        carregarVisitas();
+      },
+    });
+
+    // Imovel → atualiza KPI "Total de imóveis"
+    iniciarRealtime({
+      tabela: "Imovel",
+      onInsert: () => {
+        carregarKpis();
+        mostrarToast("🏡 Novo imóvel adicionado!");
+      },
+    });
+
+  });
+</script>
 </body>
 </html>
