@@ -1,5 +1,5 @@
 function iniciarRealtime({ tabela, onInsert, onUpdate, onDelete }) {
-  const channel = supabase
+  const channel = window.supabase
     .channel(`realtime-${tabela}`)
     .on(
       "postgres_changes",
