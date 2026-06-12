@@ -760,43 +760,5 @@
 <script src="supabaseClient.js"></script>
 <script src="realtime.js"></script>
 <script src="sisav-adm.js"></script>
-<script>
-  window.addEventListener('DOMContentLoaded', () => {
-
-    iniciarRealtimeGlobal({
-      onVisita: {
-        onInsert: async (visita) => {
-          console.log("🔴 Realtime INSERT Visita:", visita);
-          try{
-            await carregarVisitas();
-            console.log("✅ carregarVisitas() concluído, total:", allFieldData.length);
-          }catch(err){
-            console.error("Erro em carregarVisitas:", err)
-          }
-          mostrarToast("📋 Nova visita registrada!");
-        },
-        onUpdate: async () => {
-          await carregarVisitas();
-        },
-      },
-      onImovelFechado: {
-        onInsert: async () => {
-          await Promise.all([carregarKpis(), carregarVisitas()]);
-          mostrarToast("🏠 Imóvel fechado registrado!");
-        },
-        onUpdate: async () => {
-          await Promise.all([carregarKpis(), carregarVisitas()]);
-        },
-      },
-      onImovel: {
-        onInsert: async () => {
-          await carregarKpis();
-          mostrarToast("🏡 Novo imóvel adicionado!");
-        },
-      },
-    });
-
-  });
-</script>
 </body>
 </html>

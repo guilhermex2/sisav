@@ -945,4 +945,32 @@ addEventListener("DOMContentLoaded", async () => {
   try { await carregarVisitas();    } catch (e) { console.warn("Visitas:", e); }
   try { await carregarMVPs();       } catch (e) { console.warn("MVPs:", e); }
 
+  //Realtime
+    iniciarRealtimeGlobal({
+    onVisita: {
+      onInsert: async () => {
+        console.log("🔴 INSERT Visita recebido");
+        await carregarVisitas();
+        mostrarToast("📋 Nova visita registrada!");
+      },
+      onUpdate: async () => {
+        await carregarVisitas();
+      },
+    },
+    onImovelFechado: {
+      onInsert: async () => {
+        await Promise.all([carregarKpis(), carregarVisitas()]);
+        mostrarToast("🏠 Imóvel fechado registrado!");
+      },
+      onUpdate: async () => {
+        await Promise.all([carregarKpis(), carregarVisitas()]);
+      },
+    },
+    onImovel: {
+      onInsert: async () => {
+        await carregarKpis();
+        mostrarToast("🏡 Novo imóvel adicionado!");
+      },
+    },
+  });
 });
