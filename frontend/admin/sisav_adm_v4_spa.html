@@ -767,8 +767,12 @@
       onVisita: {
         onInsert: async (visita) => {
           console.log("🔴 Realtime INSERT Visita:", visita);
-          await carregarVisitas();
-          console.log("✅ carregarVisitas() concluído, total:", allFieldData.length);
+          try{
+            await carregarVisitas();
+            console.log("✅ carregarVisitas() concluído, total:", allFieldData.length);
+          }catch(err){
+            console.error("Erro em carregarVisitas:", err)
+          }
           mostrarToast("📋 Nova visita registrada!");
         },
         onUpdate: async () => {
