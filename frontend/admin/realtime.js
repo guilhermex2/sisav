@@ -1,7 +1,7 @@
 // realtime.js
 function iniciarRealtimeGlobal({ onVisita, onImovelFechado, onImovel }) {
   window.supabase
-    .channel("db-changes")
+    .channel("sisav-realtime") // ← nome único, diferente de "db-changes"
     .on("postgres_changes", { event: "*", schema: "public", table: "Visita" },
       (payload) => {
         console.log("🔴 Evento Visita:", payload);
