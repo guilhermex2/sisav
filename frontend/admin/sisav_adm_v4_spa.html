@@ -761,44 +761,38 @@
 <script src="realtime.js"></script>
 <script src="sisav-adm.js"></script>
 <script>
-window.addEventListener('DOMContentLoaded', () => {
+  window.addEventListener('DOMContentLoaded', () => {
 
-  // Visita → é o que alimenta a tabela de campo (home-tbody)
-  iniciarRealtime({
-    tabela: "Visita",
-    onInsert: async (visita) => {
-      console.log("🔴 Realtime INSERT Visita recebido:", visita);
-      await carregarVisitas(); // aguarda a API retornar antes de renderizar
-      console.log("✅ carregarVisitas() concluído, total:", allFieldData.length)
-      mostrarToast("📋 Nova visita registrada!");
-    },
-    onUpdate: async () => {
-      await carregarVisitas();
-    },
+    iniciarRealtimeGlobal({
+      onVisita: {
+        onInsert: async (visita) => {
+          console.log("🔴 Realtime INSERT Visita:", visita);
+          await carregarVisitas();
+          console.log("✅ carregarVisitas() concluído, total:", allFieldData.length);
+          mostrarToast("📋 Nova visita registrada!");
+        },
+        onUpdate: async () => {
+          await carregarVisitas();
+        },
+      },
+      onImovelFechado: {
+        onInsert: async () => {
+          await Promise.all([carregarKpis(), carregarVisitas()]);
+          mostrarToast("🏠 Imóvel fechado registrado!");
+        },
+        onUpdate: async () => {
+          await Promise.all([carregarKpis(), carregarVisitas()]);
+        },
+      },
+      onImovel: {
+        onInsert: async () => {
+          await carregarKpis();
+          mostrarToast("🏡 Novo imóvel adicionado!");
+        },
+      },
+    });
+
   });
-
-  // ImovelFechado → atualiza KPIs e fechamento diário/semanal
-  iniciarRealtime({
-    tabela: "ImovelFechado",
-    onInsert: async () => {
-      await Promise.all([carregarKpis(), carregarVisitas()]);
-      mostrarToast("🏠 Imóvel fechado registrado!");
-    },
-    onUpdate: async () => {
-      await Promise.all([carregarKpis(), carregarVisitas()]);
-    },
-  });
-
-  // Imovel → só atualiza KPIs (para não recarregar toda a tabela de campo em cada edição)
-  iniciarRealtime({
-    tabela: "Imovel",
-    onInsert: async () => {
-      await carregarKpis();
-      mostrarToast("🏡 Novo imóvel adicionado!");
-    },
-  });
-
-});
 </script>
 </body>
 </html>
