@@ -226,6 +226,11 @@ window.carregarVisitas = async function() {
       </tr>`;
     }).join("");
 
+    // Força o repaint do navegador
+    tbody.style.display = 'none';
+    tbody.offsetHeight; // lê propriedade para forçar reflow
+    tbody.style.display = '';
+    
     document.getElementById("home-page-info").textContent =
       tot === 0 ? "Sem registros" : `${start + 1}-${Math.min(start + homePerPage, tot)} de ${tot}`;
     document.getElementById("home-btn-prev").disabled = homePage <= 1;
