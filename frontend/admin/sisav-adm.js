@@ -952,6 +952,7 @@ window.carregarVisitas = async function() {
     onVisita: {
       onInsert: async () => {
         console.log("🔴 INSERT Visita recebido");
+        await new Promise(resolve => setTimeout(resolve, 1500)); // Pequeno delay para garantir que a API já tenha os dados atualizados
         await carregarVisitas();
         mostrarToast("📋 Nova visita registrada!");
       },
@@ -970,6 +971,7 @@ window.carregarVisitas = async function() {
     },
     onImovel: {
       onInsert: async () => {
+        await new Promise(resolve => setTimeout(resolve, 1500)); // Delay para garantir que a API já tenha os dados atualizados
         await carregarKpis();
         mostrarToast("🏡 Novo imóvel adicionado!");
       },
