@@ -189,7 +189,7 @@ window.carregarVisitas = async function() {
   };
 
  function homeRender() {
-  console.log("🎨 homeRender chamado, homeFiltered:", homeFiltered.length, "homePage:", homePage);
+  console.log("🎨 homeRender chamado por:", new Error().stack.split('\n')[2])
   const start = (homePage - 1) * homePerPage;
   const slice = homeFiltered.slice(start, start + homePerPage);
   const tot   = homeFiltered.length;
