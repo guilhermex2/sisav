@@ -77,23 +77,25 @@ addEventListener("DOMContentLoaded", async () => {
   }
 
   // ─── CARREGAR DADOS ────────────────────────────────────────────────────────
-  window.carregarVisitas = async function() {
-    const res  = await fetch("https://sisav-api.onrender.com/sisav/adm");
+window.carregarVisitas = async function() {
+  console.log("⏳ carregarVisitas iniciou...");
+  try {
+    const res = await fetch("https://sisav-api.onrender.com/sisav/adm");
+    console.log("📡 Response status:", res.status);
     const data = await res.json();
-    const raw  = Array.isArray(data) ? data : (data.dados || []);
-
-    // CORREÇÃO: normaliza o campo "entrada" em todos os registros logo ao carregar
-    allFieldData = raw.map(r => ({
-      ...r,
-      entrada: normalizarEntrada(r.entrada),
-    }));
-
+    console.log("📦 Dados recebidos:", data?.length ?? data?.dados?.length);
+    const raw = Array.isArray(data) ? data : (data.dados || []);
+    allFieldData = raw.map(r => ({ ...r, entrada: normalizarEntrada(r.entrada) }));
     homeFiltered = [...allFieldData];
     homePage = 1;
     popularFiltrosHome();
     homeRender();
-    recalcularAgentes(); // diario + semanal a partir dos dados locais
+    recalcularAgentes();
+    console.log("✅ carregarVisitas concluída, total:", allFieldData.length);
+  } catch(err) {
+    console.error("❌ carregarVisitas falhou:", err);
   }
+}
 
   window.carregarKpis = async function() {
     const res  = await fetch("https://sisav-api.onrender.com/sisav/adm/kpis");
