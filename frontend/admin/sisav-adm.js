@@ -188,54 +188,51 @@ window.carregarVisitas = async function() {
     homeRender();
   };
 
-  function homeRender() {
-    console.log("🎨 homeRender chamado, homeFiltered:", homeFiltered.length, "homePage:", homePage);
-    const start = (homePage - 1) * homePerPage;
-    const slice = homeFiltered.slice(start, start + homePerPage);
-    const tot   = homeFiltered.length;
+ function homeRender() {
+  console.log("🎨 homeRender chamado, homeFiltered:", homeFiltered.length, "homePage:", homePage);
+  const start = (homePage - 1) * homePerPage;
+  const slice = homeFiltered.slice(start, start + homePerPage);
+  const tot   = homeFiltered.length;
 
-    document.getElementById("home-tbody").innerHTML = slice.map(r => {
-      const realIndex   = allFieldData.indexOf(r);
-      const editedClass = r._edited ? "row-edited" : "";
-      return `<tr class="${editedClass}" data-index="${realIndex}">
-        <td><button class="btn-edit" onclick="abrirModal(${realIndex})">Editar</button></td>
-        <td>${r.data ?? "?"}</td>
-        <td>${r.quarteirao ?? "?"}</td>
-        <td>${r.lado ?? "?"}</td>
-        <td>${r.logradouro ?? "?"}</td>
-        <td class="num">${r.num ?? "?"}</td>
-        <td class="num">${r.seq ?? "?"}</td>
-        <td>${r.compl ?? "?"}</td>
-        <td>${r.tipo ?? "?"}</td>
-        <td>${r.horario ?? "?"}</td>
-        <td class="num">${r.entrada === "S"
-          ? '<span class="pill pill-green" style="font-size:10px">S</span>'
-          : r.entrada === "N"
-            ? '<span class="pill pill-red" style="font-size:10px">N</span>'
-            : '<span class="pill pill-amber" style="font-size:10px">?</span>'}</td>
-        <td class="num">${r.a1  ?? "?"}</td><td class="num">${r.a2  ?? "?"}</td>
-        <td class="num">${r.b   ?? "?"}</td><td class="num">${r.c   ?? "?"}</td>
-        <td class="num">${r.d1  ?? "?"}</td><td class="num">${r.d2  ?? "?"}</td>
-        <td class="num">${r.e   ?? "?"}</td><td class="num">${r.elim ?? "?"}</td>
-        <td class="num">${r.insp ?? "?"}</td>
-        <td class="num">${r.amostIni ?? "?"}</td><td class="num">${r.amostFin ?? "?"}</td>
-        <td class="num">${r.tubitos ?? "?"}</td>
-        <td class="num">${r.queda   ?? "?"}</td>
-        <td class="num">${r.depTrat ?? "?"}</td>
-        <td><span class="info-badge ${r.info === "Atencao" ? "info-att" : "info-ok"}">${r.info ?? "?"}</span></td>
-      </tr>`;
-    }).join("");
+  const tbody = document.getElementById("home-tbody");
+  
+  tbody.innerHTML = slice.map(r => {
+    const realIndex   = allFieldData.indexOf(r);
+    const editedClass = r._edited ? "row-edited" : "";
+    return `<tr class="${editedClass}" data-index="${realIndex}">
+      <td><button class="btn-edit" onclick="abrirModal(${realIndex})">Editar</button></td>
+      <td>${r.data ?? "?"}</td>
+      <td>${r.quarteirao ?? "?"}</td>
+      <td>${r.lado ?? "?"}</td>
+      <td>${r.logradouro ?? "?"}</td>
+      <td class="num">${r.num ?? "?"}</td>
+      <td class="num">${r.seq ?? "?"}</td>
+      <td>${r.compl ?? "?"}</td>
+      <td>${r.tipo ?? "?"}</td>
+      <td>${r.horario ?? "?"}</td>
+      <td class="num">${r.entrada === "S"
+        ? '<span class="pill pill-green" style="font-size:10px">S</span>'
+        : r.entrada === "N"
+          ? '<span class="pill pill-red" style="font-size:10px">N</span>'
+          : '<span class="pill pill-amber" style="font-size:10px">?</span>'}</td>
+      <td class="num">${r.a1  ?? "?"}</td><td class="num">${r.a2  ?? "?"}</td>
+      <td class="num">${r.b   ?? "?"}</td><td class="num">${r.c   ?? "?"}</td>
+      <td class="num">${r.d1  ?? "?"}</td><td class="num">${r.d2  ?? "?"}</td>
+      <td class="num">${r.e   ?? "?"}</td><td class="num">${r.elim ?? "?"}</td>
+      <td class="num">${r.insp ?? "?"}</td>
+      <td class="num">${r.amostIni ?? "?"}</td><td class="num">${r.amostFin ?? "?"}</td>
+      <td class="num">${r.tubitos ?? "?"}</td>
+      <td class="num">${r.queda   ?? "?"}</td>
+      <td class="num">${r.depTrat ?? "?"}</td>
+      <td><span class="info-badge ${r.info === "Atencao" ? "info-att" : "info-ok"}">${r.info ?? "?"}</span></td>
+    </tr>`;
+  }).join("");
 
-    // Força o repaint do navegador
-    tbody.style.display = 'none';
-    tbody.offsetHeight; // lê propriedade para forçar reflow
-    tbody.style.display = '';
-    
-    document.getElementById("home-page-info").textContent =
-      tot === 0 ? "Sem registros" : `${start + 1}-${Math.min(start + homePerPage, tot)} de ${tot}`;
-    document.getElementById("home-btn-prev").disabled = homePage <= 1;
-    document.getElementById("home-btn-next").disabled = homePage >= Math.ceil(tot / homePerPage) || tot === 0;
-  }
+  document.getElementById("home-page-info").textContent =
+    tot === 0 ? "Sem registros" : `${start + 1}-${Math.min(start + homePerPage, tot)} de ${tot}`;
+  document.getElementById("home-btn-prev").disabled = homePage <= 1;
+  document.getElementById("home-btn-next").disabled = homePage >= Math.ceil(tot / homePerPage) || tot === 0;
+}
 
   // ─── MODAL DE EDICAO ───────────────────────────────────────────────────────
   window.abrirModal = function (idx) {
