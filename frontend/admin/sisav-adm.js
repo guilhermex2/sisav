@@ -189,6 +189,7 @@ window.carregarVisitas = async function() {
   };
 
   function homeRender() {
+    console.log("🎨 homeRender chamado, homeFiltered:", homeFiltered.length, "homePage:", homePage);
     const start = (homePage - 1) * homePerPage;
     const slice = homeFiltered.slice(start, start + homePerPage);
     const tot   = homeFiltered.length;
@@ -953,6 +954,7 @@ window.carregarVisitas = async function() {
       onInsert: async () => {
         console.log("🔴 INSERT Visita recebido");
         await new Promise(resolve => setTimeout(resolve, 1500)); // Pequeno delay para garantir que a API já tenha os dados atualizados
+        console.log(`Antes: ${antes}, Depois: ${allFieldData.length}`);
         await carregarVisitas();
         mostrarToast("📋 Nova visita registrada!");
       },
