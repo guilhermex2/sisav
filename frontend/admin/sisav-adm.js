@@ -188,19 +188,20 @@ window.carregarVisitas = async function() {
     homeRender();
   };
 
- function homeRender() {
-  console.log("🎨 homeRender chamado por:", new Error().stack.split('\n')[2])
+function homeRender() {
   const start = (homePage - 1) * homePerPage;
   const slice = homeFiltered.slice(start, start + homePerPage);
   const tot   = homeFiltered.length;
 
-  const tbody = document.getElementById("home-tbody");
-  
-  tbody.innerHTML = slice.map(r => {
+  // Recria o tbody do zero em vez de atualizar innerHTML
+  const oldTbody = document.getElementById("home-tbody");
+  const newTbody = document.createElement("tbody");
+  newTbody.id = "home-tbody";
+  newTbody.innerHTML = slice.map(r => {
     const realIndex   = allFieldData.indexOf(r);
     const editedClass = r._edited ? "row-edited" : "";
     return `<tr class="${editedClass}" data-index="${realIndex}">
-      <td><button class="btn-edit" onclick="abrirModal(${realIndex})">Editar</button></td>
+      <td><button type="button" class="btn-edit" onclick="abrirModal(${realIndex})">Editar</button></td>
       <td>${r.data ?? "?"}</td>
       <td>${r.quarteirao ?? "?"}</td>
       <td>${r.lado ?? "?"}</td>
@@ -227,6 +228,9 @@ window.carregarVisitas = async function() {
       <td><span class="info-badge ${r.info === "Atencao" ? "info-att" : "info-ok"}">${r.info ?? "?"}</span></td>
     </tr>`;
   }).join("");
+
+  // Substitui o tbody antigo pelo novo no DOM
+  oldTbody.parentNode.replaceChild(newTbody, oldTbody);
 
   document.getElementById("home-page-info").textContent =
     tot === 0 ? "Sem registros" : `${start + 1}-${Math.min(start + homePerPage, tot)} de ${tot}`;
