@@ -955,33 +955,32 @@ function homeRender() {
   try { await carregarMVPs();       } catch (e) { console.warn("MVPs:", e); }
 
   //Realtime
-    iniciarRealtimeGlobal({
+  iniciarRealtimeGlobal({
     onVisita: {
       onInsert: async () => {
+        await new Promise(r => setTimeout(r, 1500)); // ← delay delay para garantir que o backend processou o fechamento antes de recarregar os dados
         await carregarVisitas();
-        // Força reload silencioso apenas da seção de dados
-        const page = document.getElementById('page-home');
-        page.style.display = 'none';
-        await new Promise(r => setTimeout(r, 50));
-        page.style.display = 'block';
         mostrarToast("📋 Nova visita registrada!");
       },
       onUpdate: async () => {
+        await new Promise(r => setTimeout(r, 1500)); // ← delay para garantir que o backend processou o fechamento antes de recarregar os dados
         await carregarVisitas();
       },
     },
     onImovelFechado: {
       onInsert: async () => {
+        await new Promise(r => setTimeout(r, 1500)); // ← delay para garantir que o backend processou o fechamento antes de recarregar os dados
         await Promise.all([carregarKpis(), carregarVisitas()]);
         mostrarToast("🏠 Imóvel fechado registrado!");
       },
       onUpdate: async () => {
+        await new Promise(r => setTimeout(r, 1500)); // ← delay para garantir que o backend processou o fechamento antes de recarregar os dados
         await Promise.all([carregarKpis(), carregarVisitas()]);
       },
     },
     onImovel: {
       onInsert: async () => {
-        await new Promise(resolve => setTimeout(resolve, 1500)); // Delay para garantir que a API já tenha os dados atualizados
+        await new Promise(resolve => setTimeout(resolve, 1500));
         await carregarKpis();
         mostrarToast("🏡 Novo imóvel adicionado!");
       },
