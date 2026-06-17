@@ -958,10 +958,12 @@ function homeRender() {
     iniciarRealtimeGlobal({
     onVisita: {
       onInsert: async () => {
-        console.log("🔴 INSERT Visita recebido");
-        await new Promise(resolve => setTimeout(resolve, 1500)); // Pequeno delay para garantir que a API já tenha os dados atualizados
-        console.log(`Antes: ${antes}, Depois: ${allFieldData.length}`);
         await carregarVisitas();
+        // Força reload silencioso apenas da seção de dados
+        const page = document.getElementById('page-home');
+        page.style.display = 'none';
+        await new Promise(r => setTimeout(r, 50));
+        page.style.display = 'block';
         mostrarToast("📋 Nova visita registrada!");
       },
       onUpdate: async () => {
