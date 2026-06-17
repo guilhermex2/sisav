@@ -981,7 +981,7 @@ function homeRender() {
     onImovel: {
       onInsert: async () => {
         await new Promise(resolve => setTimeout(resolve, 1500));
-        await carregarKpis();
+        await Promise.all([carregarKpis(), carregarVisitas()]);
         mostrarToast("🏡 Novo imóvel adicionado!");
       },
     },
